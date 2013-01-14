@@ -1,2 +1,4 @@
 *.o
 out/
+shareRDS/simulations/.tkenvrc
+
