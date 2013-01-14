@@ -1,0 +1,3 @@
+package sharerds;
+
+@license(LGPL);
