@@ -17,12 +17,13 @@
 #define __SHARERDS_CLIENTREINCARNATION_H_
 
 #include <omnetpp.h>
-
+#include "FailureManager.h"
 /**
  * TODO - Generated class
  */
 class ClientReincarnation : public cSimpleModule
 {
+  FailureManager *fmi;
   protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
