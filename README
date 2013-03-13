@@ -1,2 +1,41 @@
 A project for Distributed System course at Polimi (2013)
-Use it as a note
+
+For managing the pending tasks for each one of the modules we can write here but another
+team mate needs to do (for instance, fixing a bug identified, an algorithm missing, etc) and then to put when thist task was finished.
+
+=================
+TASKS NOTATION
+=================
+The notation is the following:
+Pending task has the symbol "-" in front the task description.
+Finished task hast the symbol "+" in front the task description.
+
+=================
+Andrea Mambretti
+=================
+-Implement application simple module
+-Implement the invocation manager for the client 
+-Implement client reincarnation
+-Create the client compound module
+-Test the modules and do the OMNET networks for it simulation
+
+=================
+Vinh The Hoang
+=================
+-Implement the basic multicast
+-Implement the channel failures 
+-Test the simulation on channel failures
+
+=================
+Monica Lozano
+=================
+-Implement the remoteWrite protocol with the primary table of data items
+-Implement distributed mutual exclusion.
+-Create Replica Compund Module (With Vinh help)
+-Test the modules and do the OMNET networks for it simulation.
+
+=================
+DESIGN DOUBTS
+=================
+-Should we have one invocation manager for the client and another one for replica?
+-Do we need to create another message format for the network communication?
