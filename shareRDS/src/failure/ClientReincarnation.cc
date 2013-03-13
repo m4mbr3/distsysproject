@@ -14,7 +14,8 @@
 // 
 
 #include "ClientReincarnation.h"
-
+#include "FailureManager.h"
+#include <string.h>
 Define_Module(ClientReincarnation);
 
 void ClientReincarnation::initialize()
@@ -25,4 +26,5 @@ void ClientReincarnation::initialize()
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
     // TODO - Generated method body
+
 }
