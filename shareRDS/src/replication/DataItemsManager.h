@@ -19,7 +19,9 @@
 #include <omnetpp.h>
 
 
-
+/**
+ * CONSTANTS
+ */
 #define NO_DATA -1
 
 /**

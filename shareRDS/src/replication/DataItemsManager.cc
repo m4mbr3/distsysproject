@@ -35,7 +35,7 @@ void DataItemsManager::handleMessage(cMessage *msg)
     //1. We retrieve the msg
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
     //2.The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
-    EV<< "DATAITEMS_MANAGER: Received message: " << sMsg->getName();
+    EV<< "DATAITEMS_MANAGER:("<< replicaID <<") Received message: " << sMsg->getName();
     //3.Checking which kind of operation is needed to be executed
     int operation = sMsg->getOperation();
     //4. Retrieving the data ID sent in the message
@@ -43,7 +43,7 @@ void DataItemsManager::handleMessage(cMessage *msg)
     //5.Setting up the answer in the message if the OPERATION is READING
     if(operation == READ)
     {
-        //5.1 by default we dont have the data
+        //5.1 by default we do not have the data
         int data= NO_DATA;
         //5.2 Retrieving the data identified by the given ID
         try{
@@ -53,7 +53,7 @@ void DataItemsManager::handleMessage(cMessage *msg)
         }
         catch (const std::out_of_range& e)
         {
-            EV<< "DATAITEMS_MANAGER: ERROR no data item with id " + msgDataID + "\n";
+            EV<< "DATAITEMS_MANAGER:("<< replicaID <<") ERROR no data item with id " + msgDataID + "\n";
         }
     }
     //6. Setting up the answer in the message if the OPERATION is WRITING
@@ -61,13 +61,14 @@ void DataItemsManager::handleMessage(cMessage *msg)
     {
         //6.1 Retrieving the data sent on the message
         int data = sMsg->getData();
-        //6.2 We save the data given (if the data existed before, it will be updated otherwise it will be created)
         dataItems[msgDataID] = data;
-        EV<< "DATAITEMS_MANAGER: data item succesfully saved\n";
-        //6.3 Answering as a sucess operation
+        EV<< "DATAITEMS_MANAGER:("<< replicaID <<") data item succesfully saved or updated\n";
+        //6.2 Answering as a sucess operation
         sMsg->setOperation(SUCCESS);
     }
-    //7 we send the data required when reading and the OK message on operation field when writting
-    EV<< "DATAITEMS_MANAGER: sending the result of the operation \n";
+    //7 we send the data required when reading and the SUCCESS message on operation field when writting
+    EV<< "DATAITEMS_MANAGER: ("<< replicaID <<")sending back the message to the DS mutual exclusion component \n";
+    //7.1 Sending the message to the dist. mutual exclusion component
     send(sMsg,"out");
+
 }

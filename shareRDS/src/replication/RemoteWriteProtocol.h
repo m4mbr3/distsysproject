@@ -19,12 +19,21 @@
 #include <omnetpp.h>
 
 /**
+ * CONSTANTS
+ */
+//This constant represent the replica ID when it is -1, in means that the received message is not coming from a replica
+#define NO_REPLICA -1
+
+/**
  * Remote write protocol implementation
  */
 class RemoteWriteProtocol : public cSimpleModule
 {
     private:
+    //The replica ID there the module is running
     int replicaID;
+    //The map that maintains the relation of the owned data items (the replica is the primary server of these data items)
+    std::map<std::string,bool> ownedDataItems;
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
