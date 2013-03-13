@@ -11,20 +11,24 @@
 // 
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
+//
 
-#include "ClientReincarnation.h"
-#include "FailureManager.h"
-#include <string.h>
-Define_Module(ClientReincarnation);
+#ifndef __SHARERDS_FAILUREMANAGER_H_
+#define __SHARERDS_FAILUREMANAGER_H_
 
-void ClientReincarnation::initialize()
+#include <omnetpp.h>
+#include <thread>
+#include <ctime>
+class FailureManager : public cSimpleModule
 {
-    // TODO - Generated method body
-}
+   time_t now;
+   bool fail;
+   int seed;
+   protected:
+      virtual void initialize();
+      virtual void handleMessage(cMessage *msg);
+      bool isFailed();
 
-void ClientReincarnation::handleMessage(cMessage *msg)
-{
-    // TODO - Generated method body
+};
 
-}
+#endif
