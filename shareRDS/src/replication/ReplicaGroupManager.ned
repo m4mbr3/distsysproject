@@ -16,8 +16,17 @@
 package sharerds.replication;
 
 //
-// TODO auto-generated module
+// Manager of the replicas available on the system
 //
 simple ReplicaGroupManager
 {
+    parameters:
+       //The number of replicas managed, the IDs of the replicas
+       //should be from 0 to numberReplicas
+       int numberReplicas= default(1);
+       //The replica ID where the Manager is running 
+       int replicaID = default(-1); 
+    gates:
+        input in;
+        output out;
 }

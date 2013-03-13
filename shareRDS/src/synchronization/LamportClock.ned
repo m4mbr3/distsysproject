@@ -20,4 +20,11 @@ package sharerds.synchronization;
 //
 simple LamportClock
 {
+    parameters:
+        @display("i=block/timer");
+        int localClock = default(0);
+    gates:
+       	input in;
+       	output out; 
+        
 }

@@ -18,11 +18,22 @@
 
 #include <omnetpp.h>
 
+
+
+#define NO_DATA -1
+
 /**
- * TODO - Generated class
+ * Data items manager simple module.
+ * This module is in charge in managing the data items (id versus the related data) on the replica with the id saved in replicaID
  */
 class DataItemsManager : public cSimpleModule
 {
+  private:
+   //This map contains the data items with it respective id and data
+  std::map<std::string, int> dataItems;
+  //The replica id where the dataitem manager belongs to
+  int replicaID;
+
   protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);

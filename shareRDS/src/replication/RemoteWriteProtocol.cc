@@ -14,15 +14,27 @@
 // 
 
 #include "RemoteWriteProtocol.h"
+#include "SystemMsg_m.h"
 
 Define_Module(RemoteWriteProtocol);
 
 void RemoteWriteProtocol::initialize()
 {
-    // TODO - Generated method body
+    //Initialize the replica ID of the replica that has the group manager module
+    replicaID = par("replicaID");
+    //Validating that a replica ID was defined
+    if(replicaID == -1)
+        throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
 }
 
 void RemoteWriteProtocol::handleMessage(cMessage *msg)
 {
-    // TODO - Generated method body
+    //1. We retrieve the msg
+     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+    //2.The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
+    EV<< "REPLICA_WRITE_PROTOCOL ("<< replicaID <<") Received message: " << sMsg->getName();
+    //3.Sending the message to the module in charge of managing the replication protocol
+    send(msg, "out");
+    EV<< "REPLICA_WRITE_PROTOCOL ("<< replicaID <<") Received message: " << sMsg->getName();
+
 }

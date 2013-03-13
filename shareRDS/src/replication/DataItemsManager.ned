@@ -16,8 +16,13 @@
 package sharerds.replication;
 
 //
-// TODO auto-generated module
+// Data items manager of a replica
 //
 simple DataItemsManager
 {
+    parameters:
+        int replicaID= default(-1); //REPLICA ID to which this data items manager belongs to
+    gates:
+        inout in;
+        output out;
 }

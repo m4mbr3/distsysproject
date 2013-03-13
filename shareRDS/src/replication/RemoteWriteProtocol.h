@@ -19,13 +19,15 @@
 #include <omnetpp.h>
 
 /**
- * TODO - Generated class
+ * Remote write protocol implementation
  */
 class RemoteWriteProtocol : public cSimpleModule
 {
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    private:
+    int replicaID;
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
 };
 
 #endif

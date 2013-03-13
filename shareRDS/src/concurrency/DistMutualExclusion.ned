@@ -16,8 +16,11 @@
 package sharerds.concurrency;
 
 //
-// TODO auto-generated module
+// This module implements the distributed mutual exclusion algorithm
 //
 simple DistMutualExclusion
 {
+    gates:
+        input in;
+        output out;
 }

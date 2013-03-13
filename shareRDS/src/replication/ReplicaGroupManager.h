@@ -18,14 +18,26 @@
 
 #include <omnetpp.h>
 
+
 /**
- * TODO - Generated class
+ * The simple module that is in charge of managing the replicas in the
+ * System.
+ * ASSUMPTIONS:
+ * In this module the Replicas are assume to not fail, therefore all the
+ * Replicas are available during the whole time of the execution. In case this assumption disappear, the
+ * algorithms for identifying the non faulty processes should be implemented in this module.
  */
 class ReplicaGroupManager : public cSimpleModule
 {
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    private:
+    //The number of replicas available (all the replicas from 0 to nReplicas are available)
+    int nReplicas;
+    //The replica ID in which the replica group manager is installed
+    int replicaID;
+
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
 };
 
 #endif

@@ -14,15 +14,41 @@
 // 
 
 #include "LamportClock.h"
+#include "SystemMsg_m.h"
 
 Define_Module(LamportClock);
 
 void LamportClock::initialize()
 {
-    // TODO - Generated method body
+    //We can see the current value of the parameter on the interface
+    WATCH(localClock);
+    //Obtaining the current local clock that started as zero
+    localClock =par("localClock");
+
 }
 
 void LamportClock::handleMessage(cMessage *msg)
 {
-    // TODO - Generated method body
+    //Retrieving the msg just received
+    SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+    //The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
+    EV<< "LAMPORT_SYNCH: Received message: " << sMsg->getName();
+    //Retrieving the current timestamp of the message
+    int rcvLamportClock =sMsg->getLamportClock();
+    EV<< "LAMPORT_SYNCH: The msg has timestamp" << rcvLamportClock;
+    // updating the local clock of the module usign the received value
+    if(rcvLamportClock >localClock)
+    {
+        localClock = rcvLamportClock +1;
+    }
+    else
+    {
+        localClock = localClock + 1;
+    }
+    //Updating the lamport clock of the msg
+    sMsg->setLamportClock(localClock);
+    //Sending the msg
+    EV<< "LAMPORT_SYNCH: The msg  new timestamp" << localClock;
+    send(sMsg, "out");
+
 }

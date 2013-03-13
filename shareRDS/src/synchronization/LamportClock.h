@@ -23,9 +23,12 @@
  */
 class LamportClock : public cSimpleModule
 {
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    private:
+    int localClock;
+
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
 };
 
 #endif
