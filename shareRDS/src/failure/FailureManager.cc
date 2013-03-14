@@ -41,7 +41,7 @@ bool FailureManager::isFailed()
    int secret; 
    struct tm *t;
    now = time(0);
-   t = gmtime(&now)
+   t = gmtime(&now);
    if (seed % 2 == 0){
            //even
            if (t->tm_min %2 == 0) return false;

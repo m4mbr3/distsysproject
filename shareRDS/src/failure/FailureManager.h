@@ -17,7 +17,7 @@
 #define __SHARERDS_FAILUREMANAGER_H_
 
 #include <omnetpp.h>
-#include <thread>
+//#include <thread.h>
 #include <ctime>
 class FailureManager : public cSimpleModule
 {
