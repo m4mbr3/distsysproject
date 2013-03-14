@@ -23,7 +23,7 @@ ClientReincarnation::ClientReincarnation(String clientID)
 {
     this.clientID = clientID;
     fm = new FailureManager();
-
+    am = new ApplicationManager();
 }
 int ClientReincarnation::getClientID()
 {
@@ -36,7 +36,7 @@ void ClientReincarnation::setClientID(String clientID)
 void ClientReincarnation::initialize()
 {
    // TODO - Generated method body
-    myOwnData->
+
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)

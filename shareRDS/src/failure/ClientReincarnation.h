@@ -4,22 +4,16 @@
 #include <omnetpp.h>
 #include <string>
 #include "FailureManager.h"
-#include "../replication/DataItemsManager.h"
+#include "ApplicationManager.h"
 
-/**
- * TODO - Generated class
- */
 class ClientReincarnation : public cSimpleModule
 {
-    FailureManager *fmi;
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
 
     public:
         int clientID;
         std::map<std::string,int> ownedDataItems;
-
+        FailureManager fm;
+        ApplicationManager am;
         //get and set methods
         virtual int getClientID();
         virtual void setClientID(int clientID);
