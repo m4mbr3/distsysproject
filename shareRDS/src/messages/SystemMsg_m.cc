@@ -35,6 +35,7 @@ EXECUTE_ON_STARTUP(
     if (!e) enums.getInstance()->add(e = new cEnum("OperationType"));
     e->insert(READ, "READ");
     e->insert(WRITE, "WRITE");
+    e->insert(UPDATE, "UPDATE");
 );
 
 EXECUTE_ON_STARTUP(
@@ -51,8 +52,8 @@ SystemMsg::SystemMsg(const char *name, int kind) : cMessage(name,kind)
     this->clientID_var = -1;
     this->replicaID_var = -1;
     this->lamportClock_var = -1;
-    this->replyCode_var = 0;
-    this->operation_var = 0;
+    this->replyCode_var = -1;
+    this->operation_var = -1;
     this->dataID_var = 0;
     this->data_var = 0;
 }
