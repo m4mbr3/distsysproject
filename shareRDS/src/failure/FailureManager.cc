@@ -14,7 +14,7 @@
 //
 
 #include "FailureManager.h"
-
+#include <cstdlib>
 
 void FailureManager::initialize()
 {
@@ -25,8 +25,7 @@ void FailureManager::initialize()
 
 void FailureManager::handleMessage(cMessage *msg)
 {
-
-
+    // It doesn't do anything in this class
 }
 
 bool FailureManager::isFailed()
