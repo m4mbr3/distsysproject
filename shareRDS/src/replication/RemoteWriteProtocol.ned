@@ -16,8 +16,17 @@
 package sharerds.replication;
 
 //
-// TODO auto-generated module
+// Implementation of the Remote write protocol with backup
 //
 simple RemoteWriteProtocol
 {
+    parameters:
+        //Replica id where the module is configured
+        int replicaID = default(-1);
+	gates:
+	    //Input gate for receiving a message from the invocation manager that has received a message from the network component
+        input in;
+        //Output gate for sending the processed message to the distributed mutual exclusion component
+        output out;
+            
 }

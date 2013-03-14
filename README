@@ -1,2 +1,46 @@
 A project for Distributed System course at Polimi (2013)
-Use it as a note
+
+For managing the pending tasks for each one of the modules we can write here but another
+team mate needs to do (for instance, fixing a bug identified, an algorithm missing, etc) and then to put when thist task was finished.
+
+=================
+TASKS NOTATION
+=================
+The notation is the following:
+Pending task has the symbol "-" in front of the task description.
+Finished task hast the symbol "+" in front of the task description.
+
+=================
+Andrea Mambretti
+=================
+-Implement application simple module generating random and continuos calls to the application simulated
+-Implement client reincarnation
+-Create the client compound module using the application module,invocation manager module failure module, network module (provided by Vinh)
+-Create network simulation file for simulating client failures.
+
+=================
+Vinh The Hoang
+=================
+-Implement and create a new simple module that provides the network capabilities to the client such that it can send messages to a replica.
+-Implement the totally ordered multicast simple module
+	-This make use of the Lamport clock for timestamping the message
+-Figure out how to implement channel that we can personalize and then set it up for running simulations for channel failures
+-Create a network file with a configuration file for simulating the totally ordered multicast in the ideal case and for channel failures. This can use the application module implemented by Andrea for generating random petitions from the client to an specific replica.
+
+=================
+Monica Lozano
+=================
++Implement the data items manager
++Implement the remoteWrite protocol with the primary table of data items
+-Implement the invocation manager: This should be use on the compound module of the client
+-Implement distributed mutual exclusion.
+-Create Replica Middleware compound Module
+-Create Replica Compound Module (With Vinh help)
+-Create a network file with a configuration file for simulating the distributed mutual exclusion algorithm with the remote write protocol.
+
+=================
+DESIGN DOUBTS
+=================
+- Do we need to have the replication group manager simple module? NO, we can take it out from the middleware compound module
+-Should we have one invocation manager for the client and another one for replica? YES, it should be the same as the client this will be implemented by Monica
+-Do we need to create another message format for the network communication?

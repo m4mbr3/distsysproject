@@ -16,8 +16,14 @@
 package sharerds.replication;
 
 //
-// TODO auto-generated module
+// Data items manager of a replica
 //
 simple DataItemsManager
 {
+    parameters:
+        int replicaID= default(-1); //REPLICA ID to which this data items manager belongs to
+    gates:
+        input in;//Input gate for messages from the component that executes the distributed mutual exclusion algorithm
+        output out;//Output gate for messages to the component that executes the distributed mutual exclusion algorithm
+         
 }
