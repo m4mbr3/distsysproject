@@ -53,7 +53,7 @@ enum ReplyCodeType {
  *     int replyCode @enum(ReplyCodeType);
  *     int operation @enum(OperationType);
  *     string dataID;
- *     int data;   
+ *     int data;
  * };
  * </pre>
  */
