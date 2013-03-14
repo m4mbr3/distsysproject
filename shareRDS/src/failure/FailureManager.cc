@@ -48,6 +48,6 @@ bool FailureManager::isFailed()
             if (t->tm_min %2 == 0) return true;
             else return false;
         }
-    }
-
 }
+
+

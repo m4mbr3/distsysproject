@@ -32,7 +32,7 @@ Monica Lozano
 =================
 +Implement the data items manager
 +Implement the remoteWrite protocol with the primary table of data items
--Implement the invocation manager: This should be use on the compound module of the client
++Implement the invocation manager: This should be use on the compound module of the client
 -Implement distributed mutual exclusion.
 -Create Replica Middleware compound Module
 -Create Replica Compound Module (With Vinh help)

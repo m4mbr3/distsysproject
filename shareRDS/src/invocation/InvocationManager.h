@@ -19,13 +19,17 @@
 #include <omnetpp.h>
 
 /**
- * TODO - Generated class
+ * Invocation Manager that simulates the invocation of a write/read operation from a client request or a replica
+ * request for an update
  */
 class InvocationManager : public cSimpleModule
 {
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    private:
+        int replicaID;
+
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
 };
 
 #endif

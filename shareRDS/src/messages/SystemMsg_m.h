@@ -21,12 +21,14 @@
  * enum OperationType{
  * READ=0;
  * WRITE=1;
+ * UPDATE=2;
  * };
  * </pre>
  */
 enum OperationType {
     READ = 0,
-    WRITE = 1
+    WRITE = 1,
+    UPDATE = 2
 };
 
 /**
@@ -50,8 +52,8 @@ enum ReplyCodeType {
  *     int clientID =-1;
  *     int replicaID=-1;
  *     int lamportClock=-1;
- *     int replyCode @enum(ReplyCodeType);
- *     int operation @enum(OperationType);
+ *     int replyCode=-1 @enum(ReplyCodeType);
+ *     int operation=-1 @enum(OperationType);
  *     string dataID;
  *     int data;
  * };

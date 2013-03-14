@@ -1,5 +1,6 @@
 #include "ClientApplication.h"
 #include "../messages/SystemMsg_m.h"
+
 void ClientApplication::initialize()
 {
 

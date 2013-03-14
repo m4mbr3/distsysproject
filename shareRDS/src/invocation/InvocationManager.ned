@@ -20,4 +20,9 @@ package sharerds.invocation;
 //
 simple InvocationManager
 {
+    parameters:
+        int replicaID = default(-1);// the replica ID in which the module is configured
+    gates:
+        input in; //Input gate for receiving messages from the basic network module
+        output out; //Output gate for sending the messages to the remote write protocol module
 }
