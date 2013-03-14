@@ -14,9 +14,7 @@
 //
 
 #include "ClientReincarnation.h"
-#include "FailureManager.h"
 #include "../messages/SystemMsg_m.h"
-
 #include <string>
 
 Define_Module(ClientReincarnation);
@@ -38,17 +36,19 @@ void ClientReincarnation::setClientID(String clientID)
 void ClientReincarnation::initialize()
 {
    // TODO - Generated method body
-
+    myOwnData->
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
     //TODO - Generated method body
-    SystemMsg_m *ttmsg = check_and_cast<SystemMsg_m *>(msg)
+    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg)
     if(ttmsg->clientID == this.clientID)
     {
-        //I manage the message..
-        std::cout << "I received this message" << ttmsg.getData() << "from" << ttmsg.getReplicatID() << std::endl;
+        //I manage the message..if and only if i'm not failed
+        if(!fm->isFailed())
+            std::cout << "I received this message" << ttmsg.getData() << "from" << ttmsg.getReplicatID() << std::endl;
+
     }
 
 
