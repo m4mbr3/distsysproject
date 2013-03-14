@@ -55,7 +55,7 @@ enum ReplyCodeType {
  *     int replyCode=-1 @enum(ReplyCodeType);
  *     int operation=-1 @enum(OperationType);
  *     string dataID;
- *     int data;   
+ *     int data;
  * };
  * </pre>
  */
