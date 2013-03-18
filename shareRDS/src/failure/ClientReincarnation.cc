@@ -19,20 +19,6 @@
 
 Define_Module(ClientReincarnation);
 
-ClientReincarnation::ClientReincarnation(String clientID)
-{
-    this.clientID = clientID;
-    fm = new FailureManager();
-    am = new ApplicationManager();
-}
-int ClientReincarnation::getClientID()
-{
-    return this.clientID;
-}
-void ClientReincarnation::setClientID(String clientID)
-{
-    this.clientID = clientID;
-}
 void ClientReincarnation::initialize()
 {
    // TODO - Generated method body
@@ -42,14 +28,5 @@ void ClientReincarnation::initialize()
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
     //TODO - Generated method body
-    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg)
-    if(ttmsg->clientID == this.clientID)
-    {
-        //I manage the message..if and only if i'm not failed
-        if(!fm->isFailed())
-            std::cout << "I received this message" << ttmsg.getData() << "from" << ttmsg.getReplicatID() << std::endl;
-
-    }
-
 
 }
