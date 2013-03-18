@@ -26,7 +26,8 @@ void RemoteWriteProtocol::initialize()
     if(replicaID == -1)
         throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
      //We initialized our flag
-    newDataItem = false;
+    ownDataItem = false;
+
 }
 
 void RemoteWriteProtocol::handleMessage(cMessage *msg)
@@ -46,92 +47,138 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     int msgReplyCode = sMsg->getReplyCode();
     //1.3 Checking the success of the message
     //We read/ write successfully in our owned data items
-    if(gateID== DIM_IN_GATE  && msgReplyCode == SUCCESS){
-        //If it was a write then we should notify to the other replicas
-        if(msgOperationID == WRITE)
-        {
+    if(gateID== DIM_IN_GATE) {
+        //have executed succesfully a read/write request
+        if(msgReplyCode == SUCCESS){
             //We write an owned data item
-            if(newDataItem){
+            if(ownDataItem && msgOperationID == WRITE){
                 //We set up the replica ID that will generate a request for a write or a read of a data item in the system
                  sMsg->setReplicaID(replicaID);
                 //We send the update to the multicast component such that we propagate the update
                 send(sMsg, "out", RU_OUT_GATE);
             }
-            //We have to send back the answer to the replica that owns the data item
-            else{
-                send(sMsg, "out", RW_OUT_GATE);
+            //We have to send back the answer to the client/replica that sent the request a write/update
+            //we send the answer by using the invocation manager, from which we have received this kind of messages
+            else if (msgOperationID == READ){
+                 send(sMsg, "out", IM_OUT_GATE);
             }
-
         }
-        if(msgOperationID == READ)
+        //if we couldnt read/write we answer with a fail reply code
+        else if(msgReplyCode == FAIL)
         {
-            //We answer to the client the read done, the msg is send to the basic network module
-            send(sMsg, "out", CL_OUT_GATE);
+            send(sMsg, "out", IM_OUT_GATE);
         }
-        //TODO Release the lock on the data item
+
 
     }
-    //We acquire the lock of a data item
-    else if(gateID== ME_IN_GATE  && msgReplyCode == SUCCESS){
-         //We write or read the data
-         //TODO do we need to acquire lock for reading??
-         //We read/write locally
-         if(msgOperationID == READ || newDataItem)
+    //We receive an answer from a replica to which we requested a remote write
+     else if(gateID== RW_IN_GATE){
+         //if the remote write or update succeed
+         if(msgReplyCode == SUCCESS)
          {
-             //We read the data
-             send(sMsg, "out", DIM_OUT_GATE);
+             //We now write locally on the local data items
+             send(sMsg, "out", DIM_IN_GATE);
          }
-         //Remote write
-         else if(!newDataItem){
-             //We set up the replica ID that will generate a request for a write or a read of a data item in the system
-             sMsg->setReplicaID(replicaID);
-             send(sMsg, "out", RW_OUT_GATE);
+         else if (msgReplyCode== FAIL)
+         {
+             //We send the failure message to the client using the invocation manager
+             send(sMsg, "out", IM_OUT_GATE);
          }
+
+
      }
-     //we couldnt obtain the lock, something bad happened :(
-     else if (gateID== ME_IN_GATE  && msgReplyCode == FAIL)
-     {
-         throw cRuntimeError("The lock was not possible to acquire on replica ID %d for data ID %s", replicaID,sMsg->getDataID());
-     }
-     //We receive an answer from a replica to which we requested a remote write or a remote update
-     else if(gateID== RW_IN_GATE || gateID== RU_IN_GATE){
-         //We send the answer to the client
-         send(sMsg, "out", CL_OUT_GATE);
-     }
-    //We receive an update message from other replica
+    //We receive an update message answer from the whole replicas, this is validated by the
+    //totally ordered when all multicasted messages  are ack!!
      else if (gateID == RU_IN_GATE)
      {
-         //We save the owner of the data ID received
+         if(msgReplyCode == SUCCESS){
+             //we send back the answer to the client w/o changing any locally
+             send(sMsg, "out", IM_OUT_GATE);
+         }
+         else if (msgReplyCode== FAIL)
+          {
+             //TODO need to do roll back of the local writing operation
+          }
+
+     }
+    /**
+     * 2. We received a message from the network:
+     * -A client request: read/write
+     * -A replica request: update data item value
+     */
+     else if(gateID == IM_IN_GATE)
+     {
+         // If the received message comes from another replica it means that it is an update
+         // To a data item that the remote replica owns.
          int msgReplicaID = sMsg->getReplicaID();
-         dataItemsOwners[msgDataID] =msgReplicaID;
-         //We reflect the change locally
-         send(sMsg, "out", DIM_OUT_GATE);
-     }
-     /**
-      * 2. We send a message to the mutual exclusion component for acquiring the lock
-      */
-     else{
+         // The message is a write operation, so it can come from a client or from a replica
+         if(msgOperationID == WRITE)
+         {
+             //We need to check if the data item is owned by one of the replicas, or if it is the
+             //first time that it is created
+            int replica = -1;
+            try{
+                //checking if the data item with the given ID already exists in the system
+                replica =dataItemsOwners.at(msgDataID);
+                //If it exist and the message do not come from a replica, and the
+                //the owner of the data item is the current replica
+                if(msgReplicaID== NO_REPLICA && replica == replicaID)
+                {
+                    //we update our flag
+                    ownDataItem = true;
+                   // TODO we log the write in the case the update is cancel for some reason
+                   // We send the update of the data item to the local data items manager
+                   send(msg, "out", DIM_OUT_GATE);
+                }
+                //If it exists and the message comes from another replica, then we check that
+                //actually the data items belong to the replica id in the message and so it means this is
+                //an update
+                else if(msgReplicaID!= NO_REPLICA && replica == msgReplicaID)
+                {
+                    //we update the owned flag
+                    ownDataItem = false;
+                    // TODO we log the write in the case the update is cancel for some reason
+                    // We send the update of the data item to the local data items manager
+                    send(msg, "out", DIM_OUT_GATE);
+                }
+                //if it exists and the message do not have a replica ID, then the request comes from a client
+                //and the owner is another replica (not the current) then we send a remote write
+                else if(msgReplicaID== NO_REPLICA && replica!= NO_REPLICA)
+                {
+                    //we update our flag
+                   ownDataItem = false;
+                  // TODO we log the write in the case the update is cancel for some reason
+                  // We send the update of the data item to the remote replica that owns it
+                  send(msg, "out", RW_OUT_GATE);
+                }
+             }
+            catch (const std::out_of_range& e)
+            {
+                //the data items does not exists in the system
+                //the data item is send by a client and therefore the data item belongs to the current replica
+               if(msgReplicaID== NO_REPLICA){
+                   //Then it is a new data item in the whole system and the owner is the current replica
+                   ownDataItem = true;
+               }
+                //if it is coming from an update from other replica that has written for the first time the data item
+               //in its data items manager
+               else if(msgReplicaID!= NO_REPLICA)
+                 {
+                     //We relate the replica ID with the data item id
+                     dataItemsOwners[msgDataID] =msgReplicaID;
+                     ownDataItem = false;
+                 }
+               //TODO log the write in the case the creation of the data item is cancel for some reason
+               //We write the data item involved in the message
+               send(msg, "out", DIM_OUT_GATE);
 
-        //If it is a write, we need to check if the current replica owned the data item with the ID received
-        if(msgOperationID == WRITE){
-           int replica = -1;
-           try{
-               //checking if the data item with the given ID already exists in the system
-               replica =dataItemsOwners.at(msgDataID);
             }
-           catch (const std::out_of_range& e)
-           {
-               //Then it is a new data item in the whole system
-               newDataItem = true;
-           }
-
-        }
-
-        if(!newDataItem)
-            send(msg, "out", ME_OUT_GATE);
-        else
-            send(msg, "out", ME_OUT_GATE);
-
+         }
      }
-
+    //if the request is a read, we read the current value locally the data items manager should check the
+    //time stamp of the read.
+     else if(msgOperationID == READ)
+     {
+         send(msg, "out", DIM_OUT_GATE);
+     }
 }

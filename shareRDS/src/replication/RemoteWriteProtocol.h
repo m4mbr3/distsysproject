@@ -28,25 +28,26 @@
 /**
  * Output gates
  */
-//Output gate to the dist. mutual exclusion
-#define ME_OUT_GATE 0
+//Output gate to the invocation manager
+#define IM_OUT_GATE 0
 //Output gate to the data items manager
 #define DIM_OUT_GATE 1
+//Output gate for logging the writing message on a data item
+#define WAP_OUT_GATE 2
 //Output gate to remote replica (remote write)
-#define RW_OUT_GATE 2
+#define RW_OUT_GATE 3
 //Output gate for sending an update of a owned data item
-#define RU_OUT_GATE 3
-//Output gate for sending the answer to the client connected to the current replica
-#define CL_OUT_GATE 4
+#define RU_OUT_GATE 4
+
 /**
  * Input gates
  */
-//Input gate from the invocation manager, representing a client connected to the current replica
-#define CL_IN_GATE 0
-//Input gate from the dist. mutual exclusion component for the acquire of the lock
-#define ME_IN_GATE 1
+//Input gate from the invocation manager, representing a client/replica connected to the current replica
+#define IM_IN_GATE 0
 //Input gate for receiving answers from read/write operations executed by the data items manager
-#define DIM_IN_GATE 2
+#define DIM_IN_GATE 1
+//Input gate from the write ahead protocol component for logging a write action on a data item
+#define WAP_IN_GATE 2
 //Input gate for receiving answer of remote write to a replica that owns the data item involved in the protocol
 #define RW_IN_GATE 3
 //Input gate for receiving updates operations from the other replicas
@@ -60,8 +61,8 @@ class RemoteWriteProtocol : public cSimpleModule
     private:
     //The replica ID there the module is running
     int replicaID;
-    //An attribute that control the success of a creation of a new data item in the current replica
-    bool newDataItem;
+    //An attribute that allows to know if the replica owns the data item involved in the request
+    bool ownDataItem;
     //The map contains the information related to ownership of a data item in the replicas system
     std::map<std::string,int> dataItemsOwners;
     protected:
