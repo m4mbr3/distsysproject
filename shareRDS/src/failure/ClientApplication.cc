@@ -4,13 +4,12 @@
 Define_Module(ClientApplication);
 void ClientApplication::initialize()
 {
-    this.clientID = par("clientID");
-    this.maxNReplica = par("maxNReplica");
+    this.clientID.setClientID(par("clientID"));
+    this.maxNReplica.setMaxNReplica(par("maxNReplica"));
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
     SystemMsg *ttmsg = new SystemMsg();
     scheduleAt(3.0, ttmsg);
-
 }
 
 void ClientApplication::handleMessage(cMessage *msg)
@@ -59,7 +58,7 @@ SystemMsg* ClientApplication::generateMessage(){
     ttmsg->setReplicaID(intuniform(0, maxNReplica));
     ttmsg->setOperation(intuniform(0,1));
     ttmsg->setData(intuniform(-1000, 1000));
-    ttmsg->setDataID((intuniform(0,100)%2==0): (intuniform(0,25)+'a') ? (intuniform(0,25)+'A'));
+    ttmsg->setDataID(intuniform(0,100)%2==0 : intuniform(0,25)+'a' ? intuniform(0,25)+'A');
 
     return ttmsg;
 }
