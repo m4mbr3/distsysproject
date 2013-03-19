@@ -14,10 +14,9 @@ class ClientApplication : public  cSimpleModule
         virtual void setClientID(int clientID);
         virtual int getDataItem(std::string dataID);
         virtual void setDataItem(int dataValue);
-        //Class costructor
-        virtual ClientReincarnation(String clientID);
-
     protected:
+        virtual SystemMsg *generateMEssage();
+        virtual forwardMessage(SystemMsg *ttmsg);
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
 };
