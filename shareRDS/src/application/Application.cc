@@ -1,41 +1,79 @@
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/.
-//
-
 #include "Application.h"
 #include "../messages/SystemMsg_m.h"
-Define_Module(Application);
 
+Define_Module(Application);
 void Application::initialize()
 {
-    // TODO - Generated method body
-
+    this.clientID.setClientID(par("clientID"));
+    this.maxNReplica.setMaxNReplica(par("maxNReplica"));
+    if (clientID == -1 )
+        throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
+    SystemMsg *ttmsg = new SystemMsg();
+    scheduleAt(3.0, ttmsg);
 }
 
 void Application::handleMessage(cMessage *msg)
 {
-    // TODO - Generated method body
-    SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-    //The operation done by this module are understand messages and save or delete elements
-}
-map<std::string,int> getDataClientByName(std::string name, int value)
-{
-    return dataClient.insert
-}
-void setDataClientElement(string name, int value)
-{
-    dataClient.insert(decltype(dataClient)::value_type(name,value));
+    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
+    if ((ttmsg->getClientID()== -1)
+            &&(ttmsg->getReplicaID()== -1)
+                &&(ttmsg->getLamportClock()== -1)
+                    &&(ttmsg->getReplicaCode() == -1)
+                        &&(ttmsg->getOperation()== -1)){
+        // I received a message from myself
+        scheduleAt(4.0, ttmsg);
+        SystemMsg msgGen = Application::generateMessage();
+        send (msgGen, "out");
+    }
+    else if (clientID == ttmsg->clientID){
+        int operation = ttmsg->getOperation();
+        int isSuccess = ttmsg->getReplicaCode();
+        if ((operation == READ) && (!ttmsg->isSuccess)){
+            EV<<"CLIENT_APPLICATION: ("<< clientID <<") ERROR no data item with id " << ttmsg->msgDataID << "\n";
+        }
+        //to check if operation_var can be equal to SUCCESS
+        else if ((operation == READ) && (ttmsg->isSuccess)){
+            //Here I have to add to my local copy the value read from the replica and saved
+            //item
+         /*   if (ownedDataItems.at(ttmsg->getDataID())== std::result_out_of_range){
+                ownedDataItems[ttmsg->getDataID()] = ttmsg->getData();
+            }*/
+            ownedDataItems[ttmsg->getDataID()]=ttmsg->getData();
+        }
+        else if ((operation == WRITE)&&(!ttmsg->isSuccess)){
+            EV<<"CLIENT_APPLICATION: ("<< clientID <<")ERROR fail  write our datavalue at replica "<< ttmsg->replicaID <<"\n";
+        }
+        else if ((operation == WRITE) && (ttmsg->isSuccess)){
+            EV<<"CLIENT_APPLICATION: ("<< clientID <<")NOTIFICATION data written correctly at replica "<< ttmsg->replicaID <<"\n";
+        }
+        delete ttmsg;
+    }
 }
 
+SystemMsg* Application::generateMessage(){
+    //This is the function that generates random messages to replica
+
+    SystemMsg *ttmsg = new SystemMsg();
+    ttmsg->setClientId(this.clientID);
+    ttmsg->setReplicaID(intuniform(0, maxNReplica));
+    ttmsg->setOperation(intuniform(0,1));
+    ttmsg->setData(intuniform(-1000, 1000));
+    ttmsg->setDataID(intuniform(0,100)%2==0 : intuniform(0,25)+'a' ? intuniform(0,25)+'A');
+
+    return ttmsg;
+}
+int Application::getMaxNReplica(){
+    return maxNReplica;
+}
+void Application::setMaxNReplica(int numberOfReplica){
+    this.maxNReplica =numberOfReplica;
+}
+int Application::getClientID()
+{
+    return this.clientID;
+}
+void Application::setClientID(String clientID)
+{
+    this.clientID = clientID;
+}
 
