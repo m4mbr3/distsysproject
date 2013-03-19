@@ -18,8 +18,13 @@ void ClientApplication::handleMessage(cMessage *msg)
             EV<<"CLIENT_APPLICATION: ("<< clientID <<") ERROR no data item with id " << ttmsg->msgDataID << "\n";
         }
         else if ((operation == READ) && (ttmsg->SUCCESS)){
-            //Here i have to add to my local copy the value read from the replica and save
-            //it
+            //Here I have to add to my local copy the value read from the replica and save
+            //item
+         /*   if (ownedDataItems.at(ttmsg->getDataID())== std::errc::result_out_of_range){
+                ownedDataItems[ttmsg->getDataID()] = ttmsg->getData();
+            }*/
+            ownedDataItems[ttmsg->getDataID()]=ttmsg->getData();
+
         }
         else if ((operation == WRITE)&&(ttmsg->SUCCESS)){
 
