@@ -13,28 +13,16 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
+package sharerds.recovery;
+
 //
-// Operation type
+// Represents a log used as write ahead log.
 //
-enum OperationType{
-READ=0;
-WRITE=1;
-COMMIT=2;
-ROLLBACK=3;
-UPDATE = 4;
-};
-//Reply code enum
-enum ReplyCodeType{
-FAIL=0;
-SUCCESS=1;
-};
-//Message
-message SystemMsg {
-    int clientID =-1;
-    int replicaID=-1;
-    int lamportClock=-1;
-    int replyCode=-1 @enum(ReplyCodeType);
-    int operation=-1 @enum(OperationType);
-    string dataID;
-    int data;   
-};
+simple WriteAheadLog
+{
+    parameters:
+        int replicaID= default(-1);
+    gates:
+        input in; // receiving requests  (write/rollback) from the Replica write protocol for saving a write to a data item
+        output out; //sending the answer to the requests coming from the Replica write protocol.
+}

@@ -18,6 +18,16 @@
 
 #include <omnetpp.h>
 
+//Input gates
+//The constant of the input gate for receiving requests
+#define REQUEST_IN_GATE 0
+//Input gate for receiving answers from sent requests
+#define ANSWER_IN_GATE 1
+//out
+//Output gate for sending the request to a component that starts processing it
+#define REQUEST_OUT_GATE 0
+//Output gate for sending answer from a received request
+#define ANSWER_OUT_GATE 1
 /**
  * Invocation Manager that simulates the invocation of a write/read operation from a client request or a replica
  * request for an update
@@ -25,7 +35,7 @@
 class InvocationManager : public cSimpleModule
 {
     private:
-        int replicaID;
+        int entityID;
 
     protected:
         virtual void initialize();

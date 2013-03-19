@@ -21,19 +21,28 @@ Define_Module(InvocationManager);
 void InvocationManager::initialize()
 {
     //The replica ID where this manager belongs to
-    replicaID = par("replicaID");
+    entityID = par("entityID");
     //Validating that a replica ID was defined
-    if(replicaID == -1)
-        throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
+    if(entityID == -1)
+        throw cRuntimeError("Invalid ID %d; must be >= 0", entityID);
 }
 
 void InvocationManager::handleMessage(cMessage *msg)
 {
-    //1. We retrieve the msg
+    //We retrieve the msg
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-    //2.The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
-    EV<< "INVOCATION_MANAGER:("<< replicaID <<") Received message: " << sMsg->getName();
-    //3. Sending the message to the remote write protocol module using the out gate
-    send(sMsg, "out");
-
+    //We retrieve the gate of arrival
+    int gateID = sMsg->getArrivalGateId();
+    //if we receive a request
+    if(gateID == gate("in", REQUEST_IN_GATE)->getId())
+    {
+        //We send the message to the component that should start processing the request
+        send(msg, "out", REQUEST_OUT_GATE);
+    }
+    //if we have receive an answer from a request sent in the past of one middle step when processing a request
+    else if(gateID == gate("in", ANSWER_IN_GATE)->getId())
+    {
+        //We send back the answer to the component that has sent the invocation to which we already have the answer
+         send(msg, "out", ANSWER_OUT_GATE);
+    }
 }
