@@ -19,7 +19,7 @@
 #include <omnetpp.h>
 #include <string>
 #include "FailureManager.h"
-#include "../replication/DataItemsManager.h"
+#include "DataItemsManager.h"
 /**
  * TODO - Generated class
  */

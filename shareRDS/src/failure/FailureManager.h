@@ -24,10 +24,12 @@ class FailureManager : public cSimpleModule
    time_t now;
    bool fail;
    int seed;
+   public:
+       bool isFailed();
    protected:
       virtual void initialize();
       virtual void handleMessage(cMessage *msg);
-      bool isFailed();
+
 
 };
 

@@ -17,6 +17,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(CMDENV_LIBS)
 INCLUDE_PATH = \
     -I. \
     -Iapplication \
+    -Icompmodules \
     -Iconcurrency \
     -Ifailure \
     -Iinvocation \
@@ -50,6 +51,7 @@ OBJS = \
     $O/multicast/BasicMulticast.o \
     $O/networks/ReplicaNetwork.o \
     $O/recovery/LogManager.o \
+    $O/recovery/WriteAheadLog.o \
     $O/replication/DataItemsManager.o \
     $O/replication/RemoteWriteProtocol.o \
     $O/replication/ReplicaGroupManager.o \
@@ -133,6 +135,7 @@ clean:
 	-rm -f shareRDS shareRDS.exe libshareRDS.so libshareRDS.a libshareRDS.dll libshareRDS.dylib
 	-rm -f ./*_m.cc ./*_m.h
 	-rm -f application/*_m.cc application/*_m.h
+	-rm -f compmodules/*_m.cc compmodules/*_m.h
 	-rm -f concurrency/*_m.cc concurrency/*_m.h
 	-rm -f failure/*_m.cc failure/*_m.h
 	-rm -f invocation/*_m.cc invocation/*_m.h
@@ -148,7 +151,7 @@ cleanall: clean
 	-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
-	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
+	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/Application.o: application/Application.cc \
@@ -157,7 +160,9 @@ $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \
 	concurrency/DistMutualExclusion.h
 $O/failure/ClientReincarnation.o: failure/ClientReincarnation.cc \
 	failure/ClientReincarnation.h \
-	failure/FailureManager.h
+	failure/FailureManager.h \
+	messages/SystemMsg_m.h \
+	replication/DataItemsManager.h
 $O/failure/FailureManager.o: failure/FailureManager.cc \
 	failure/FailureManager.h
 $O/invocation/InvocationManager.o: invocation/InvocationManager.cc \
@@ -176,6 +181,9 @@ $O/networks/ReplicaNetwork.o: networks/ReplicaNetwork.cc \
 	networks/ReplicaNetwork.h
 $O/recovery/LogManager.o: recovery/LogManager.cc \
 	recovery/LogManager.h
+$O/recovery/WriteAheadLog.o: recovery/WriteAheadLog.cc \
+	messages/SystemMsg_m.h \
+	recovery/WriteAheadLog.h
 $O/replication/DataItemsManager.o: replication/DataItemsManager.cc \
 	messages/SystemMsg_m.h \
 	replication/DataItemsManager.h

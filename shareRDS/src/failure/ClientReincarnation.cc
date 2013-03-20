@@ -14,8 +14,8 @@
 //
 
 #include "ClientReincarnation.h"
-//#include "../messages/SystemMsg_m.h"
-//#include <string>
+#include "SystemMsg_m.h"
+#include <string>
 
 Define_Module(ClientReincarnation);
 
