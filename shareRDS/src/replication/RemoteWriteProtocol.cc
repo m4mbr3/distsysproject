@@ -50,40 +50,53 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     if(gateID== gate("in",WAP_IN_GATE)->getId())
     {
         //We keep the operation WRITE
-        //TODO should we put the log message in another message type?
          sMsg->setOperation(WRITE);
+         //If it is an answer for a rollaback
         if(msgOperationID == ROLLBACK && msgReplyCode == SUCCESS)
         {
             //We rollback the write done on the local data items
             send(msg, "out", DIM_OUT_GATE);
         }
+        //if is a rollback of a just created data item, then we will need to delete it
+        else if(msgOperationID == DELETE && msgReplyCode == SUCCESS)
+        {
+            //We keep the operation DELETE
+             sMsg->setOperation(DELETE);
+             //We delete the data item
+             send(msg, "out", DIM_OUT_GATE);
+
+        }
+        //If the message through the network was successfully sent and executed on the other replicas
         else if(msgOperationID == COMMIT && msgReplyCode == SUCCESS)
         {
             //We answer correctly to the requester through the invocation manager
             send(msg, "out", IM_OUT_GATE);
         }
+        //If it was a request for logging a write request
         else if(msgOperationID == UPDATE && msgReplyCode == SUCCESS)
         {
             //We reflect the write in the local data items
             send(msg, "out", DIM_OUT_GATE);
         }
-        //Something really bad happen :(, we send the message with the failure to the invocation manager
+        //Something really bad happen :(, we rise an exception
         else if(msgReplyCode == FAIL){
-            send(sMsg, "out", IM_OUT_GATE);
+            //send(sMsg, "out", IM_OUT_GATE);
+            throw cRuntimeError("REPLICA_WRITE_PROTOCOL:(1) A strange error happens when logging a write request in the replica %d", replicaID);
         }
     }
-    //We read/ write in our owned data items
+    //We read/ write in our local data items
     else if(gateID== gate("in",DIM_IN_GATE)->getId() ){
         //have executed succesfully a read/write request
         if(msgReplyCode == SUCCESS){
             //We write an owned data item
             if(ownDataItem && msgOperationID == WRITE){
-                //We set up the replica ID that will generate a request for a write or a read of a data item in the system
-                 sMsg->setReplicaID(replicaID);
+                //We set up the replica ID owner that will generate a request for an update to data item in the whole system
+                 sMsg->setReplicaOwnerID(replicaID);
                 //We send the update to all the other replica by using multicasting
                 send(sMsg, "out", RU_OUT_GATE);
             }
-            //We write locally and if the writing is from a data item that was written remotely on the owner replica
+            //We write locally and if the writing is from a data item that was written remotely on the owner replica and is requiring
+            //an update/creation in the current replica
             else if(!ownDataItem && msgOperationID == WRITE)
             {
                 //We answer that the request has finished to the requester
@@ -95,10 +108,11 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                  send(sMsg, "out", IM_OUT_GATE);
             }
         }
-        //if we couldnt read/write we answer with a fail reply code
+        //if we couldnt read/write we rise and exception because the replica is assume to not fail
         else if(msgReplyCode == FAIL)
         {
-            send(sMsg, "out", IM_OUT_GATE);
+            //send(sMsg, "out", IM_OUT_GATE);
+            throw cRuntimeError("REPLICA_WRITE_PROTOCOL: (2) A strange error happens when logging a write request in the replica %d", replicaID);
         }
 
 
@@ -108,14 +122,21 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
          //if the remote write or update succeed
          if(msgReplyCode == SUCCESS)
          {
+             //We write locally
+             send(msg, "out", DIM_OUT_GATE);
+             /*
              //We log the write locally
              sMsg->setOperation(UPDATE);
              send(msg, "out", WAP_OUT_GATE);
+             */
          }
+         //The remote write failed because something bad happen during the communication
          else if (msgReplyCode== FAIL)
          {
              //We send the failure message to the client using the invocation manager
              send(sMsg, "out", IM_OUT_GATE);
+             //throw cRuntimeError("REPLICA_WRITE_PROTOCOL: (3) A strange error happens when logging a write request in the replica %d", replicaID);
+
          }
 
 
@@ -124,15 +145,16 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     //totally ordered when all multicasted messages  are ack!!
      else if (gateID == gate("in",RU_IN_GATE)->getId())
      {
+         //The multicast worked fine, and therefore we confirm our local write
          if(msgReplyCode == SUCCESS){
-             //we send back the answer to the client w/o changing any locally
-             //send(sMsg, "out", IM_OUT_GATE);
+             //We confirm the written done before multicasting
              sMsg->setOperation(COMMIT);
              send(msg,"out", WAP_OUT_GATE);
          }
+         //Something got bad on when multicasting the update, then we need to roll back our local write
          else if (msgReplyCode== FAIL)
           {
-             //need to do roll back of the local writing operation
+             //need to do roll back of the local writing operation (creation or update!)
              sMsg->setOperation(ROLLBACK);
              //We retrieve the previous value from the log
              send(msg,"out", WAP_OUT_GATE);
@@ -146,45 +168,54 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
      */
      else if(gateID == gate("in",IM_IN_GATE)->getId())
      {
-         // If the received message comes from another replica it means that it is an update
-         // To a data item that the remote replica owns.
+         //Retrieving the replica sender ID
          int msgReplicaID = sMsg->getReplicaID();
+         //Retrieving the replica owner ID
+         int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
          // The message is a write operation, so it can come from a client or from a replica
          if(msgOperationID == WRITE)
          {
              //We need to check if the data item is owned by one of the replicas, or if it is the
-             //first time that it is created
+             //first time that it is created (locally) or in a remote replica that is sending us an update
             int replica = -1;
             try{
                 //checking if the data item with the given ID already exists in the system
                 replica =dataItemsOwners.at(msgDataID);
-                //If it exist and the message do not come from a replica, and the
+                //If it exist, and the message do not come from a replica, and the
                 //the owner of the data item is the current replica
                 if(msgReplicaID== NO_REPLICA && replica == replicaID)
                 {
                     //we update our flag
                     ownDataItem = true;
-                   // we log the write in the case the update is cancel for some reason
+                    //We update the owner field of the message
+                    sMsg->setReplicaOwnerID(replicaID);
+                    // we log the write in the case the updat to other replicas cannot be done,and therefore we should able to revert the write
                    sMsg->setOperation(UPDATE);
                    send(msg,"out", WAP_OUT_GATE);
                 }
-                //If it exists and the message comes from another replica, then we check that
-                //actually the data items belong to the replica id in the message and so it means this is
+                //If it exists, and the message comes from another replica, then we check that
+                //actually the data items belong to the replica id in the message and then meaning that this is
                 //an update
-                else if(msgReplicaID!= NO_REPLICA && replica == msgReplicaID)
+                else if(msgReplicaID!= NO_REPLICA && replica == msgReplicaOwnerID)
                 {
                     //we update the owned flag
                     ownDataItem = false;
+                    //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
+                    send(msg, "out", DIM_OUT_GATE);
+                    /*
                     // we log the write in the case the update is cancel for some reason
                     sMsg->setOperation(UPDATE);
                     send(msg, "out", WAP_OUT_GATE);
+                    */
                 }
-                //if it exists and the message do not have a replica ID, then the request comes from a client
-                //and the owner is another replica (not the current) then we send a remote write
-                else if(msgReplicaID== NO_REPLICA && replica!= NO_REPLICA)
+                //if it exists, and the message do not have a replica ID, then the request comes from a client
+                //and the current replica is not the owner (is another replica) then we send a remote write
+                else if(msgReplicaID== NO_REPLICA && replica!= replicaID)
                 {
                     //we update our flag
                    ownDataItem = false;
+                   //We update the owner field of the message
+                   sMsg->setReplicaOwnerID(replica);
                    // We send the update of the data item to the remote replica that owns it
                    send(msg, "out", RW_OUT_GATE);
                 }
@@ -196,17 +227,21 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                if(msgReplicaID== NO_REPLICA){
                    //Then it is a new data item in the whole system and the owner is the current replica
                    ownDataItem = true;
+                   //We update the owner field of the message
+                   sMsg->setReplicaOwnerID(replicaID);
                }
                 //if it is coming from an update from other replica that has written for the first time the data item
                //in its data items manager
                //is an update
                else if(msgReplicaID!= NO_REPLICA)
                  {
-                     //We relate the replica ID with the data item id
-                     dataItemsOwners[msgDataID] =msgReplicaID;
+                     //We relate the replica owner ID with the data item id
+                     dataItemsOwners[msgDataID] =msgReplicaOwnerID;
+                     //We set up our boolean as not owned data item
                      ownDataItem = false;
                  }
-               //log the write in the case the creation of the data item is cancel for some reason
+               //log the write because the message will be send through the network, which can fail and therefore we must rollback the
+               //the related executed writings
                sMsg->setOperation(UPDATE);
                send(msg,"out", WAP_OUT_GATE);
             }

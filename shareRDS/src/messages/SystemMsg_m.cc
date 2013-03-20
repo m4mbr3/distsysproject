@@ -38,6 +38,8 @@ EXECUTE_ON_STARTUP(
     e->insert(COMMIT, "COMMIT");
     e->insert(ROLLBACK, "ROLLBACK");
     e->insert(UPDATE, "UPDATE");
+    e->insert(ACK, "ACK");
+    e->insert(DELETE, "DELETE");
 );
 
 EXECUTE_ON_STARTUP(
@@ -53,6 +55,7 @@ SystemMsg::SystemMsg(const char *name, int kind) : cMessage(name,kind)
 {
     this->clientID_var = -1;
     this->replicaID_var = -1;
+    this->replicaOwnerID_var = -1;
     this->lamportClock_var = -1;
     this->replyCode_var = -1;
     this->operation_var = -1;
@@ -81,6 +84,7 @@ void SystemMsg::copy(const SystemMsg& other)
 {
     this->clientID_var = other.clientID_var;
     this->replicaID_var = other.replicaID_var;
+    this->replicaOwnerID_var = other.replicaOwnerID_var;
     this->lamportClock_var = other.lamportClock_var;
     this->replyCode_var = other.replyCode_var;
     this->operation_var = other.operation_var;
@@ -93,6 +97,7 @@ void SystemMsg::parsimPack(cCommBuffer *b)
     cMessage::parsimPack(b);
     doPacking(b,this->clientID_var);
     doPacking(b,this->replicaID_var);
+    doPacking(b,this->replicaOwnerID_var);
     doPacking(b,this->lamportClock_var);
     doPacking(b,this->replyCode_var);
     doPacking(b,this->operation_var);
@@ -105,6 +110,7 @@ void SystemMsg::parsimUnpack(cCommBuffer *b)
     cMessage::parsimUnpack(b);
     doUnpacking(b,this->clientID_var);
     doUnpacking(b,this->replicaID_var);
+    doUnpacking(b,this->replicaOwnerID_var);
     doUnpacking(b,this->lamportClock_var);
     doUnpacking(b,this->replyCode_var);
     doUnpacking(b,this->operation_var);
@@ -130,6 +136,16 @@ int SystemMsg::getReplicaID() const
 void SystemMsg::setReplicaID(int replicaID)
 {
     this->replicaID_var = replicaID;
+}
+
+int SystemMsg::getReplicaOwnerID() const
+{
+    return replicaOwnerID_var;
+}
+
+void SystemMsg::setReplicaOwnerID(int replicaOwnerID)
+{
+    this->replicaOwnerID_var = replicaOwnerID;
 }
 
 int SystemMsg::getLamportClock() const
@@ -229,7 +245,7 @@ const char *SystemMsgDescriptor::getProperty(const char *propertyname) const
 int SystemMsgDescriptor::getFieldCount(void *object) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 7+basedesc->getFieldCount(object) : 7;
+    return basedesc ? 8+basedesc->getFieldCount(object) : 8;
 }
 
 unsigned int SystemMsgDescriptor::getFieldTypeFlags(void *object, int field) const
@@ -248,8 +264,9 @@ unsigned int SystemMsgDescriptor::getFieldTypeFlags(void *object, int field) con
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<7) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<8) ? fieldTypeFlags[field] : 0;
 }
 
 const char *SystemMsgDescriptor::getFieldName(void *object, int field) const
@@ -263,13 +280,14 @@ const char *SystemMsgDescriptor::getFieldName(void *object, int field) const
     static const char *fieldNames[] = {
         "clientID",
         "replicaID",
+        "replicaOwnerID",
         "lamportClock",
         "replyCode",
         "operation",
         "dataID",
         "data",
     };
-    return (field>=0 && field<7) ? fieldNames[field] : NULL;
+    return (field>=0 && field<8) ? fieldNames[field] : NULL;
 }
 
 int SystemMsgDescriptor::findField(void *object, const char *fieldName) const
@@ -278,11 +296,12 @@ int SystemMsgDescriptor::findField(void *object, const char *fieldName) const
     int base = basedesc ? basedesc->getFieldCount(object) : 0;
     if (fieldName[0]=='c' && strcmp(fieldName, "clientID")==0) return base+0;
     if (fieldName[0]=='r' && strcmp(fieldName, "replicaID")==0) return base+1;
-    if (fieldName[0]=='l' && strcmp(fieldName, "lamportClock")==0) return base+2;
-    if (fieldName[0]=='r' && strcmp(fieldName, "replyCode")==0) return base+3;
-    if (fieldName[0]=='o' && strcmp(fieldName, "operation")==0) return base+4;
-    if (fieldName[0]=='d' && strcmp(fieldName, "dataID")==0) return base+5;
-    if (fieldName[0]=='d' && strcmp(fieldName, "data")==0) return base+6;
+    if (fieldName[0]=='r' && strcmp(fieldName, "replicaOwnerID")==0) return base+2;
+    if (fieldName[0]=='l' && strcmp(fieldName, "lamportClock")==0) return base+3;
+    if (fieldName[0]=='r' && strcmp(fieldName, "replyCode")==0) return base+4;
+    if (fieldName[0]=='o' && strcmp(fieldName, "operation")==0) return base+5;
+    if (fieldName[0]=='d' && strcmp(fieldName, "dataID")==0) return base+6;
+    if (fieldName[0]=='d' && strcmp(fieldName, "data")==0) return base+7;
     return basedesc ? basedesc->findField(object, fieldName) : -1;
 }
 
@@ -300,10 +319,11 @@ const char *SystemMsgDescriptor::getFieldTypeString(void *object, int field) con
         "int",
         "int",
         "int",
+        "int",
         "string",
         "int",
     };
-    return (field>=0 && field<7) ? fieldTypeStrings[field] : NULL;
+    return (field>=0 && field<8) ? fieldTypeStrings[field] : NULL;
 }
 
 const char *SystemMsgDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
@@ -315,10 +335,10 @@ const char *SystemMsgDescriptor::getFieldProperty(void *object, int field, const
         field -= basedesc->getFieldCount(object);
     }
     switch (field) {
-        case 3:
+        case 4:
             if (!strcmp(propertyname,"enum")) return "ReplyCodeType";
             return NULL;
-        case 4:
+        case 5:
             if (!strcmp(propertyname,"enum")) return "OperationType";
             return NULL;
         default: return NULL;
@@ -351,11 +371,12 @@ std::string SystemMsgDescriptor::getFieldAsString(void *object, int field, int i
     switch (field) {
         case 0: return long2string(pp->getClientID());
         case 1: return long2string(pp->getReplicaID());
-        case 2: return long2string(pp->getLamportClock());
-        case 3: return long2string(pp->getReplyCode());
-        case 4: return long2string(pp->getOperation());
-        case 5: return oppstring2string(pp->getDataID());
-        case 6: return long2string(pp->getData());
+        case 2: return long2string(pp->getReplicaOwnerID());
+        case 3: return long2string(pp->getLamportClock());
+        case 4: return long2string(pp->getReplyCode());
+        case 5: return long2string(pp->getOperation());
+        case 6: return oppstring2string(pp->getDataID());
+        case 7: return long2string(pp->getData());
         default: return "";
     }
 }
@@ -372,11 +393,12 @@ bool SystemMsgDescriptor::setFieldAsString(void *object, int field, int i, const
     switch (field) {
         case 0: pp->setClientID(string2long(value)); return true;
         case 1: pp->setReplicaID(string2long(value)); return true;
-        case 2: pp->setLamportClock(string2long(value)); return true;
-        case 3: pp->setReplyCode(string2long(value)); return true;
-        case 4: pp->setOperation(string2long(value)); return true;
-        case 5: pp->setDataID((value)); return true;
-        case 6: pp->setData(string2long(value)); return true;
+        case 2: pp->setReplicaOwnerID(string2long(value)); return true;
+        case 3: pp->setLamportClock(string2long(value)); return true;
+        case 4: pp->setReplyCode(string2long(value)); return true;
+        case 5: pp->setOperation(string2long(value)); return true;
+        case 6: pp->setDataID((value)); return true;
+        case 7: pp->setData(string2long(value)); return true;
         default: return false;
     }
 }
@@ -397,8 +419,9 @@ const char *SystemMsgDescriptor::getFieldStructName(void *object, int field) con
         NULL,
         NULL,
         NULL,
+        NULL,
     };
-    return (field>=0 && field<7) ? fieldStructNames[field] : NULL;
+    return (field>=0 && field<8) ? fieldStructNames[field] : NULL;
 }
 
 void *SystemMsgDescriptor::getFieldStructPointer(void *object, int field, int i) const

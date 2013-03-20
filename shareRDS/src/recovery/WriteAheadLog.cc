@@ -46,6 +46,7 @@ void WriteAheadLog::handleMessage(cMessage *msg)
     }
     catch (const std::out_of_range& e)
     {
+        //otherwise we create it
         dataItemsLog[msgDataID] = versions;
     }
     //Verifying which kind of operation is being required
@@ -64,9 +65,16 @@ void WriteAheadLog::handleMessage(cMessage *msg)
    {
        //we delete the last version
        versions.pop_back();
-       int oData = versions.back();
-       //we send back the old value
-       sMsg->setData(oData);
+       //We check if we are rolling back an update of a data item or a creation of the data item
+       int size = versions.size();
+       if(size>0){
+           int oData=versions.back();
+           //we send back the old value
+           sMsg->setData(oData);
+       }
+       //is a just created data item
+       else
+           sMsg->setOperation(DELETE);
 
    }
    sMsg->setReplyCode(SUCCESS);

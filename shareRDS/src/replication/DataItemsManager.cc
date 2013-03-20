@@ -32,13 +32,11 @@ void DataItemsManager::initialize()
 
 void DataItemsManager::handleMessage(cMessage *msg)
 {
-    //1. We retrieve the msg
+    //We retrieve the msg
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-    //2.The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
-    EV<< "DATAITEMS_MANAGER:("<< replicaID <<") Received message: " << sMsg->getName();
-    //3.Checking which kind of operation is needed to be executed
+    //Checking which kind of operation is needed to be executed
     int operation = sMsg->getOperation();
-    //4. Retrieving the data ID sent in the message
+    //Retrieving the data ID sent in the message
      std::string msgDataID = sMsg->getDataID();
     //5.Setting up the answer in the message if the OPERATION is READING
     if(operation == READ)
@@ -48,27 +46,32 @@ void DataItemsManager::handleMessage(cMessage *msg)
         //5.2 Retrieving the data identified by the given ID
         try{
             data = dataItems.at(msgDataID);
-            //5.2.1 putting the data on the answer msg
+            //putting the data on the answer msg
             sMsg->setData(data);
         }
+        //Something strange happens, because the data item does not exists
         catch (const std::out_of_range& e)
         {
-            EV<< "DATAITEMS_MANAGER:("<< replicaID <<") ERROR no data item with id " + msgDataID + "\n";
+            throw cRuntimeError("DATAITEMS_MANAGER:(1) the data item wit id %s does not exists in replica id %d",sMsg->getDataID(), replicaID);
         }
     }
-    //6. Setting up the answer in the message if the OPERATION is WRITING
-    if(operation == WRITE)
+    //Setting up the answer in the message if the OPERATION is WRITING
+    else if(operation == WRITE)
     {
-        //6.1 Retrieving the data sent on the message
+        //Retrieving the data sent on the message
         int data = sMsg->getData();
         dataItems[msgDataID] = data;
-        EV<< "DATAITEMS_MANAGER:("<< replicaID <<") data item succesfully saved or updated\n";
-        //6.2 Answering as a sucess operation
-        sMsg->setReplyCode(SUCCESS);
+
     }
-    //7 we send the data required when reading and the SUCCESS message on operation field when writting
-    EV<< "DATAITEMS_MANAGER: ("<< replicaID <<")sending back the message to the DS mutual exclusion component \n";
-    //7.1 Sending the message to the dist. mutual exclusion component
+    //Setting up the answer in the message if the OPERATION is DELETING
+    else if(operation == DELETE){
+
+        dataItems.erase(msgDataID);
+
+    }
+    //We always answer a success answer because the Replica do not fail, so the operation require must execute successfully
+     sMsg->setReplyCode(SUCCESS);
+    //Sending the message to the dist. mutual exclusion component
     send(sMsg,"out");
 
 }

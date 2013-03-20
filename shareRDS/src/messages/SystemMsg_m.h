@@ -24,6 +24,8 @@
  * COMMIT=2;
  * ROLLBACK=3;
  * UPDATE = 4;
+ * ACK = 5;
+ * DELETE = 6;
  * };
  * </pre>
  */
@@ -32,7 +34,9 @@ enum OperationType {
     WRITE = 1,
     COMMIT = 2,
     ROLLBACK = 3,
-    UPDATE = 4
+    UPDATE = 4,
+    ACK = 5,
+    DELETE = 6
 };
 
 /**
@@ -55,6 +59,7 @@ enum ReplyCodeType {
  * message SystemMsg {
  *     int clientID =-1;		
  *     int replicaID=-1;		
+ *     int replicaOwnerID = -1;	
  *     int lamportClock=-1;
  *     int replyCode=-1 @enum(ReplyCodeType);
  *     int operation=-1 @enum(OperationType);
@@ -68,6 +73,7 @@ class SystemMsg : public ::cMessage
   protected:
     int clientID_var;
     int replicaID_var;
+    int replicaOwnerID_var;
     int lamportClock_var;
     int replyCode_var;
     int operation_var;
@@ -95,6 +101,8 @@ class SystemMsg : public ::cMessage
     virtual void setClientID(int clientID);
     virtual int getReplicaID() const;
     virtual void setReplicaID(int replicaID);
+    virtual int getReplicaOwnerID() const;
+    virtual void setReplicaOwnerID(int replicaOwnerID);
     virtual int getLamportClock() const;
     virtual void setLamportClock(int lamportClock);
     virtual int getReplyCode() const;
