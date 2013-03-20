@@ -151,7 +151,7 @@ cleanall: clean
 	-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
-	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
+	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/Application.o: application/Application.cc \
@@ -160,7 +160,9 @@ $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \
 	concurrency/DistMutualExclusion.h
 $O/failure/ClientReincarnation.o: failure/ClientReincarnation.cc \
 	failure/ClientReincarnation.h \
-	failure/FailureManager.h
+	failure/FailureManager.h \
+	messages/SystemMsg_m.h \
+	replication/DataItemsManager.h
 $O/failure/FailureManager.o: failure/FailureManager.cc \
 	failure/FailureManager.h
 $O/invocation/InvocationManager.o: invocation/InvocationManager.cc \

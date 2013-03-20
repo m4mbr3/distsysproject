@@ -53,8 +53,8 @@ enum ReplyCodeType {
  * Class generated from <tt>messages/SystemMsg.msg</tt> by opp_msgc.
  * <pre>
  * message SystemMsg {
- *     int clientID =-1;
- *     int replicaID=-1;
+ *     int clientID =-1;		
+ *     int replicaID=-1;		
  *     int lamportClock=-1;
  *     int replyCode=-1 @enum(ReplyCodeType);
  *     int operation=-1 @enum(OperationType);
