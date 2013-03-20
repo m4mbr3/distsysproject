@@ -2,12 +2,14 @@
 #define __SHARERDS_APPLICATION_H_
 
 #include <cstdlib>
+#include <SystemMsg_m.h>
+using namespace std;
+
 class Application : public  cSimpleModule
 {
     public:
         int clientID;
         int maxNReplicat;
-        int vector<int> replicaIDs;
         std::map<std::string,int> ownedDataItems;
         //get and set methods
         virtual int getMaxNReplica();
