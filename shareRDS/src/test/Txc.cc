@@ -33,8 +33,17 @@ void Txc::initialize()
 void Txc::handleMessage(cMessage *msg)
 {
     EV<< "Received message: " << msg->getName() << " sending it again";
+    EV<< "\nMsg attributes: Timestamp:" << msg->getTimestamp() << " CreationTime:" << msg->getCreationTime() << " ArrivalTime:" << msg->getArrivalTime();
     // just send back the message we received
     if(counter >0)
         send(msg, "out");
+    if(counter == 3)
+    {
+        cMessage *msg = new cMessage("dull msg");
+        msg->setTimestamp(simTime());
+        EV<< "\nDull msg attributes: Timestamp:" << msg->getTimestamp() << " CreationTime:" << msg->getCreationTime() << " ArrivalTime:" << msg->getArrivalTime();
+
+        send(msg, "out");
+    }
     counter--;
 }

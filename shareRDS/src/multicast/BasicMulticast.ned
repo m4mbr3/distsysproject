@@ -15,9 +15,30 @@
 
 package sharerds.multicast;
 
-//
-// TODO auto-generated module
-//
+//enum OperationType {
+//	WRITE = 1;
+//	UPDATE = 0;
+//};
+//const WRITE_OP = 1;
+//const UPDATE_OP = 0;
+
 simple BasicMulticast
 {
+    parameters:
+        int replicaID;				// replicaID for InvocationManager
+        int operation = default(-1);		// operation in request
+	        // operation = 0 	// UPDATE
+	        // operation = 1 	// WRITE
+    gates:
+        input inRmtWrtProtocol;				// input gate for receiving request from RemoteWriteProtocol
+        output outInvocMan;			// output gate for sending request to InvocationManager
+        input inLamportClk;
+        output outLamportClk;
+        
+        input inReplica[5];
+        
+        
+    //connections:
+        //TODO: define all connections below if needed
+    
 }

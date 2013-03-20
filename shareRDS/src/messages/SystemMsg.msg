@@ -28,8 +28,8 @@ SUCCESS=1;
 };
 //Message
 message SystemMsg {
-    int clientID =-1;
-    int replicaID=-1;
+    int clientID =-1;		// ID of the client that make the request
+    int replicaID=-1;		// ID of the owner
     int lamportClock=-1;
     int replyCode=-1 @enum(ReplyCodeType);
     int operation=-1 @enum(OperationType);

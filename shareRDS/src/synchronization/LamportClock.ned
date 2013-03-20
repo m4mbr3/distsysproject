@@ -24,7 +24,8 @@ simple LamportClock
         @display("i=block/timer");
         int localClock = default(0);
     gates:
-       	input in;
+       	input inUpt;
+       	input inNew;
        	output out; 
         
 }

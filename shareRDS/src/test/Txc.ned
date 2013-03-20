@@ -24,5 +24,7 @@ simple Txc
     gates:
         input in;
         output out;
+    
+        
 }
 

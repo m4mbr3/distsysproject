@@ -31,6 +31,7 @@ void LamportClock::handleMessage(cMessage *msg)
 {
     //Retrieving the msg just received
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+
     //The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
     EV<< "LAMPORT_SYNCH: Received message: " << sMsg->getName();
     //Retrieving the current timestamp of the message
@@ -45,8 +46,11 @@ void LamportClock::handleMessage(cMessage *msg)
     {
         localClock = localClock + 1;
     }
-    //Updating the lamport clock of the msg
-    sMsg->setLamportClock(localClock);
+    // if the msg is coming from inNew gate then we also need to update the lamport clock of the msg
+    if (sMsg->getArrivalGateId() == findGate("inNew")){
+        //Updating the lamport clock of the msg
+        sMsg->setLamportClock(localClock);
+    }
     //Sending the msg
     EV<< "LAMPORT_SYNCH: The msg  new timestamp" << localClock;
     send(sMsg, "out");
