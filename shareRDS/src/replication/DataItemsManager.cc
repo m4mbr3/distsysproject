@@ -64,7 +64,7 @@ void DataItemsManager::handleMessage(cMessage *msg)
         dataItems[msgDataID] = data;
         EV<< "DATAITEMS_MANAGER:("<< replicaID <<") data item succesfully saved or updated\n";
         //6.2 Answering as a sucess operation
-        sMsg->setOperation(SUCCESS);
+        sMsg->setReplyCode(SUCCESS);
     }
     //7 we send the data required when reading and the SUCCESS message on operation field when writting
     EV<< "DATAITEMS_MANAGER: ("<< replicaID <<")sending back the message to the DS mutual exclusion component \n";

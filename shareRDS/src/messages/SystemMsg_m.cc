@@ -35,6 +35,8 @@ EXECUTE_ON_STARTUP(
     if (!e) enums.getInstance()->add(e = new cEnum("OperationType"));
     e->insert(READ, "READ");
     e->insert(WRITE, "WRITE");
+    e->insert(COMMIT, "COMMIT");
+    e->insert(ROLLBACK, "ROLLBACK");
     e->insert(UPDATE, "UPDATE");
 );
 

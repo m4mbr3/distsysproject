@@ -13,28 +13,28 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-//
-// Operation type
-//
-enum OperationType{
-READ=0;
-WRITE=1;
-COMMIT=2;
-ROLLBACK=3;
-UPDATE = 4;
+#ifndef __SHARERDS_WRITEAHEADLOG_H_
+#define __SHARERDS_WRITEAHEADLOG_H_
+
+#include <omnetpp.h>
+
+
+/**
+ * Implements a write ahead log
+ */
+class WriteAheadLog : public cSimpleModule
+{
+  private:
+    //the replica id where the log is installed
+    int replicaID;
+    //Is the map of all the writings executed on each data item
+    std::map<std::string, std::vector<int> > dataItemsLog;
+    //Is the map of the state of the writings executed on each item
+    //1= COMMIT, 0= ROLLBACK
+    std::map<std::string, bool> dataItemsState;
+  protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
 };
-//Reply code enum
-enum ReplyCodeType{
-FAIL=0;
-SUCCESS=1;
-};
-//Message
-message SystemMsg {
-    int clientID =-1;		// ID of the client that make the request
-    int replicaID=-1;		// ID of the owner
-    int lamportClock=-1;
-    int replyCode=-1 @enum(ReplyCodeType);
-    int operation=-1 @enum(OperationType);
-    string dataID;
-    int data;   
-};
+
+#endif

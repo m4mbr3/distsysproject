@@ -15,8 +15,9 @@ Andrea Mambretti
 =================
 -Implement application simple module generating random and continuos calls to the application simulated
 -Implement client reincarnation
--Create the client compound module using the application module,invocation manager module failure module, network module (provided by Vinh)
+-Create the client compound module (Client.ned) using the application module,invocation manager module failure module, network module. This file should be saved in the folder src>compmodules
 -Create network simulation file for simulating client failures.
+-Implement the client network module because it should be different from the replica one, it should be located on network folder of the project.
 
 =================
 Vinh The Hoang
@@ -33,10 +34,11 @@ Monica Lozano
 +Implement the data items manager
 +Implement the remoteWrite protocol with the primary table of data items
 +Implement the invocation manager: This should be use on the compound module of the client
--Implement distributed mutual exclusion.
--Create Replica Middleware compound Module
--Create Replica Compound Module (With Vinh help)
--Create a network file with a configuration file for simulating the distributed mutual exclusion algorithm with the remote write protocol.
+ + Update the invocation manager with the last changes on inputs and outputs
++Implement the write ahead log.
+-Create Replica Compound Module(Replica.ned)
+ -Finish connections with network module
+-Create a network file with a configuration file for simulating the remote write protocol.
 
 =================
 DESIGN DOUBTS

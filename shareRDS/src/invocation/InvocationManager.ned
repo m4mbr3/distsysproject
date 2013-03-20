@@ -21,8 +21,14 @@ package sharerds.invocation;
 simple InvocationManager
 {
     parameters:
-        int replicaID = default(-1);// the replica ID in which the module is configured
+        // the id of the current compound module where this module is installed (in the case of the client is the Client ID, and in the case of the replica is the replica ID)
+        int entityID = default(-1);
     gates:
-        input in; //Input gate for receiving messages from the basic network module
-        output out; //Output gate for sending the messages to the remote write protocol module
+        //Input gate 0 for receiving requests from the application (in the case of the client) or from a replica (only applies to replicas)
+        //Input gate 1 for receiving the answers from request sent in the compound module to which this module is installed the answer are related
+        //to middle steps on the execution of a request (for instance a remote write or an update
+        input in[2]; 
+        //Output gate 0 for re-sending the requests received to the next of the compound module involved
+     	//Output gate 1 for sending the answer to the entity that has invoke something in the current compound module that has installed this module
+        output out[2];
 }
