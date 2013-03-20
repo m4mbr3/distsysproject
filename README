@@ -36,8 +36,8 @@ Monica Lozano
 +Implement the invocation manager: This should be use on the compound module of the client
  + Update the invocation manager with the last changes on inputs and outputs
 +Implement the write ahead log.
--Create Replica Compound Module(Replica.ned)
- -Finish connections with network module
++Create Replica Compound Module(Replica.ned)
+ +Finish connections with network module
 -Create a network file with a configuration file for simulating the remote write protocol.
 
 =================
