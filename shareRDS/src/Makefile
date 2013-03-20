@@ -17,6 +17,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(CMDENV_LIBS)
 INCLUDE_PATH = \
     -I. \
     -Iapplication \
+    -Icompmodules \
     -Iconcurrency \
     -Ifailure \
     -Iinvocation \
@@ -43,21 +44,25 @@ OBJS = \
     $O/application/Application.o \
     $O/concurrency/DistMutualExclusion.o \
     $O/failure/ClientReincarnation.o \
+    $O/failure/FailureManager.o \
     $O/invocation/InvocationManager.o \
     $O/multicast/AtomicMulticast.o \
     $O/multicast/BasicMulticast.o \
     $O/recovery/LogManager.o \
+    $O/recovery/WriteAheadLog.o \
     $O/replication/DataItemsManager.o \
     $O/replication/RemoteWriteProtocol.o \
     $O/replication/ReplicaGroupManager.o \
     $O/synchronization/BarkleySynch.o \
     $O/synchronization/LamportClock.o \
     $O/test/Txc.o \
-    $O/messages/CSynchMsg_m.o
+    $O/messages/CSynchMsg_m.o \
+    $O/messages/SystemMsg_m.o
 
 # Message files
 MSGFILES = \
-    messages/CSynchMsg.msg
+    messages/CSynchMsg.msg \
+    messages/SystemMsg.msg
 
 #------------------------------------------------------------------------------
 
@@ -128,6 +133,7 @@ clean:
 	-rm -f shareRDS shareRDS.exe libshareRDS.so libshareRDS.a libshareRDS.dll libshareRDS.dylib
 	-rm -f ./*_m.cc ./*_m.h
 	-rm -f application/*_m.cc application/*_m.h
+	-rm -f compmodules/*_m.cc compmodules/*_m.h
 	-rm -f concurrency/*_m.cc concurrency/*_m.h
 	-rm -f failure/*_m.cc failure/*_m.h
 	-rm -f invocation/*_m.cc invocation/*_m.h
@@ -142,7 +148,7 @@ cleanall: clean
 	-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
-	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
+	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/Application.o: application/Application.cc \
@@ -150,26 +156,41 @@ $O/application/Application.o: application/Application.cc \
 $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \
 	concurrency/DistMutualExclusion.h
 $O/failure/ClientReincarnation.o: failure/ClientReincarnation.cc \
-	failure/ClientReincarnation.h
+	failure/ClientReincarnation.h \
+	failure/FailureManager.h \
+	messages/SystemMsg_m.h \
+	replication/DataItemsManager.h
+$O/failure/FailureManager.o: failure/FailureManager.cc \
+	failure/FailureManager.h
 $O/invocation/InvocationManager.o: invocation/InvocationManager.cc \
-	invocation/InvocationManager.h
+	invocation/InvocationManager.h \
+	messages/SystemMsg_m.h
 $O/messages/CSynchMsg_m.o: messages/CSynchMsg_m.cc \
 	messages/CSynchMsg_m.h
+$O/messages/SystemMsg_m.o: messages/SystemMsg_m.cc \
+	messages/SystemMsg_m.h
 $O/multicast/AtomicMulticast.o: multicast/AtomicMulticast.cc \
 	multicast/AtomicMulticast.h
 $O/multicast/BasicMulticast.o: multicast/BasicMulticast.cc \
 	multicast/BasicMulticast.h
 $O/recovery/LogManager.o: recovery/LogManager.cc \
 	recovery/LogManager.h
+$O/recovery/WriteAheadLog.o: recovery/WriteAheadLog.cc \
+	messages/SystemMsg_m.h \
+	recovery/WriteAheadLog.h
 $O/replication/DataItemsManager.o: replication/DataItemsManager.cc \
+	messages/SystemMsg_m.h \
 	replication/DataItemsManager.h
 $O/replication/RemoteWriteProtocol.o: replication/RemoteWriteProtocol.cc \
+	messages/SystemMsg_m.h \
 	replication/RemoteWriteProtocol.h
 $O/replication/ReplicaGroupManager.o: replication/ReplicaGroupManager.cc \
+	messages/SystemMsg_m.h \
 	replication/ReplicaGroupManager.h
 $O/synchronization/BarkleySynch.o: synchronization/BarkleySynch.cc \
 	synchronization/BarkleySynch.h
 $O/synchronization/LamportClock.o: synchronization/LamportClock.cc \
+	messages/SystemMsg_m.h \
 	synchronization/LamportClock.h
 $O/test/Txc.o: test/Txc.cc \
 	test/Txc.h

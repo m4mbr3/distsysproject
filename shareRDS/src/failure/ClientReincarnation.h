@@ -19,7 +19,7 @@
 #include <omnetpp.h>
 #include <string>
 #include "FailureManager.h"
-#include "../replication/DataItemsManager.h"
+#include "DataItemsManager.h"
 /**
  * TODO - Generated class
  */
@@ -29,14 +29,15 @@ class ClientReincarnation : public cSimpleModule
     public:
         int clientID;
         std::map<std::string,int> ownedDataItems;
+        FailureManager* fm;
 
         //get and set methods
         virtual int getClientID();
         virtual void setClientID(int clientID);
-        virtual int getDataItem(std::string dataID);
-        virtual void setDataItem(int dataValue);
+        //virtual int getDataItem(std::string dataID);
+       // virtual void setDataItem(int dataValue);
         //Class costructor
-        virtual ClientReincarnation(String clientID);
+      //  virtual ClientReincarnation(std::string clientID);
 
     protected:
         virtual void initialize();

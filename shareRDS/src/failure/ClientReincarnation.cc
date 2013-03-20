@@ -14,40 +14,40 @@
 //
 
 #include "ClientReincarnation.h"
-#include "../messages/SystemMsg_m.h"
+#include "SystemMsg_m.h"
 #include <string>
 
 Define_Module(ClientReincarnation);
 
-ClientReincarnation::ClientReincarnation(String clientID)
+/*
+ClientReincarnation::ClientReincarnation(std::string clientID)
 {
     this.clientID = clientID;
     fm = new FailureManager();
 
 }
+*/
 int ClientReincarnation::getClientID()
 {
-    return this.clientID;
+    return clientID;
 }
-void ClientReincarnation::setClientID(String clientID)
+void ClientReincarnation::setClientID(int clientID)
 {
-    this.clientID = clientID;
+    this->clientID = clientID;
 }
 void ClientReincarnation::initialize()
 {
-   // TODO - Generated method body
-    myOwnData->
+    //myOwnData->
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
-    //TODO - Generated method body
-    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg)
-    if(ttmsg->clientID == this.clientID)
+    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
+    if(ttmsg->getClientID() == clientID)
     {
         //I manage the message..if and only if i'm not failed
         if(!fm->isFailed())
-            std::cout << "I received this message" << ttmsg.getData() << "from" << ttmsg.getReplicatID() << std::endl;
+           std::cout << "I received this message" << ttmsg->getData() << "from" << ttmsg->getReplicaID() << std::endl;
 
     }
 
