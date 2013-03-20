@@ -22,6 +22,7 @@ WRITE=1;
 COMMIT=2;
 ROLLBACK=3;
 UPDATE = 4;
+ACK = 5;
 };
 //Reply code enum
 enum ReplyCodeType{
@@ -31,7 +32,8 @@ SUCCESS=1;
 //Message
 message SystemMsg {
     int clientID =-1;		// ID of the client that make the request
-    int replicaID=-1;		// ID of the owner
+    int replicaID=-1;		// ID of the sender
+    int replicaOwnerID = -1;	// ID of the owner of dataID
     int lamportClock=-1;
     int replyCode=-1 @enum(ReplyCodeType);
     int operation=-1 @enum(OperationType);

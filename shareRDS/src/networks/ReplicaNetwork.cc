@@ -55,7 +55,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
     // retrieve the treeID of the msg because it won't change when cloning the msg
     int msgTreeID = sMsg->getTreeId();
 
-    if (gateID == findGate("inRequests")){
+    /*if (gateID == findGate("inRequests")){
         if (gateID == gate("inRequests", 0)->getId()) {
         // the msg is sent to inRequest[0], which means it comes from RemoteWriteProtocol for remoteWrite
             //TODO: do we need to check if the msg is on top of the queue or not?
@@ -70,32 +70,37 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             }
         }
     }
-    else if (gateID == findGate("inClients")) {
     // the msg is send to one of inClients gates, which means it comes from a client
+    else if (gateID == findGate("inClients")) {
         // iterate through all inClients gates:
         for (int i = 0; i < gateSize("inClients"); i++){
             // to find the sender client
             if (gateID == findGate("inClients", i)) {
-                // check the operation of the msg
-                if (msgOperation == READ) {
+                // check the operation of the msg:
+
                 // READ request from a client
-                    // check the lamport clock of the last WRITE on the same dataID
+                if (msgOperation == READ) {
+                    // boolean flag to mark if the READ request is younger than
                     bool isYoung = true;
+                    // iterate from the last item in queue
                     for (int j = queuingMsg.size(); j >= 0 ; --j) {
+                        // compare with msg on the same dataID
                         if (msgDataID == queuingMsg.at(j).getDataID()) {
+                            // incoming msg is older than a WRITE in queue
                             if ((msgLamportClk < queuingMsg.at(j).getLamportClock()) && (queuingMsg.at(j).getOperation() == WRITE)) {
                                 //TODO reject because the READ request is older than existing WRITE in queue
                                 isYoung = false;
                                 sMsg->setReplyCode(FAIL);
                                 send(sMsg, gate("outClients", i));
+                                break;  // a break here will interrupt the FOR iteration?
                             }
                         }
                     }
+                    // incoming READ request is younger than any WRITE in queue
                     if (isYoung) {
-                        // the READ request is younger than any existing WRITE in queue, therefore put it in the queue
+
 
                     }
-                    // TODO: 19/3/2013
                 }
                 else if (msgOperation == WRITE) {
                 // WRITE request from a client
@@ -120,5 +125,30 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
     else if (gateID == findGate("inLamportClk")) {
     // the msg is sent to inLamportClk
     // I don't know what it means yet :)))))
+    }*/
+
+    //TODO START EVERYTHING AGAIN 20/3/2013
+
+    // iterate through all inClients gates
+    for (int i = 0; i < gateSize("inClients"); i++) {
+        // if incoming msg is from one of the inClients gate:
+        if (gateID == findGate("inClients", i)) {
+        // then check the msg operation
+            // msg operation is WRITE request from a client
+            if (msgOperation == WRITE) {
+                // send the msg to Lamport clock to set new lamport clock
+                send(sMsg, "outLamportNew");
+            }
+            // msg operation is READ request from a client
+            else if (msgOperation == READ) {
+                // send the msg to Lamport clock to set new lamport clock
+                send(sMsg, "outLamportNew");
+            }
+        }
+    }
+    // incoming msg is from inRequests[0]
+    // RemoteWrite from RemoteWriteProtocol
+    if (gateID == findGate("inRequests", 0)) {
+        //
     }
 }

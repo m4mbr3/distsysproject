@@ -33,5 +33,6 @@ simple ReplicaNetwork
 		output outClients[];
 		output outReplicas[];
 		output outAnswer;       	// to InvocationManager
-        output outLamportClk;
+        output outLamportNew;		// to LamportClock for setting new lamport clock value
+        output outLamportUpt;		// to Lamport Clock for update lamport clock value only
 }
