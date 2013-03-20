@@ -23,6 +23,7 @@ INCLUDE_PATH = \
     -Iinvocation \
     -Imessages \
     -Imulticast \
+    -Inetworks \
     -Irecovery \
     -Ireplication \
     -Isynchronization \
@@ -48,6 +49,7 @@ OBJS = \
     $O/invocation/InvocationManager.o \
     $O/multicast/AtomicMulticast.o \
     $O/multicast/BasicMulticast.o \
+    $O/networks/ReplicaNetwork.o \
     $O/recovery/LogManager.o \
     $O/recovery/WriteAheadLog.o \
     $O/replication/DataItemsManager.o \
@@ -139,6 +141,7 @@ clean:
 	-rm -f invocation/*_m.cc invocation/*_m.h
 	-rm -f messages/*_m.cc messages/*_m.h
 	-rm -f multicast/*_m.cc multicast/*_m.h
+	-rm -f networks/*_m.cc networks/*_m.h
 	-rm -f recovery/*_m.cc recovery/*_m.h
 	-rm -f replication/*_m.cc replication/*_m.h
 	-rm -f synchronization/*_m.cc synchronization/*_m.h
@@ -148,7 +151,7 @@ cleanall: clean
 	-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
-	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
+	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/Application.o: application/Application.cc \
@@ -157,9 +160,7 @@ $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \
 	concurrency/DistMutualExclusion.h
 $O/failure/ClientReincarnation.o: failure/ClientReincarnation.cc \
 	failure/ClientReincarnation.h \
-	failure/FailureManager.h \
-	messages/SystemMsg_m.h \
-	replication/DataItemsManager.h
+	failure/FailureManager.h
 $O/failure/FailureManager.o: failure/FailureManager.cc \
 	failure/FailureManager.h
 $O/invocation/InvocationManager.o: invocation/InvocationManager.cc \
@@ -173,6 +174,9 @@ $O/multicast/AtomicMulticast.o: multicast/AtomicMulticast.cc \
 	multicast/AtomicMulticast.h
 $O/multicast/BasicMulticast.o: multicast/BasicMulticast.cc \
 	multicast/BasicMulticast.h
+$O/networks/ReplicaNetwork.o: networks/ReplicaNetwork.cc \
+	messages/SystemMsg_m.h \
+	networks/ReplicaNetwork.h
 $O/recovery/LogManager.o: recovery/LogManager.cc \
 	recovery/LogManager.h
 $O/recovery/WriteAheadLog.o: recovery/WriteAheadLog.cc \

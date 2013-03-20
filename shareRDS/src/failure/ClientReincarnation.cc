@@ -19,37 +19,37 @@
 
 Define_Module(ClientReincarnation);
 
-/*
-ClientReincarnation::ClientReincarnation(std::string clientID)
-{
-    this.clientID = clientID;
-    fm = new FailureManager();
-
-}
-*/
-int ClientReincarnation::getClientID()
-{
-    return clientID;
-}
-void ClientReincarnation::setClientID(int clientID)
-{
-    this->clientID = clientID;
-}
+//ClientReincarnation::ClientReincarnation(String clientID)
+//{
+//    this.clientID = clientID;
+//    fm = new FailureManager();
+//
+//}
+//int ClientReincarnation::getClientID()
+//{
+////    return this.clientID;
+//}
+//void ClientReincarnation::setClientID(String clientID)
+//{
+////    this.clientID = clientID;
+//}
 void ClientReincarnation::initialize()
 {
-    //myOwnData->
+   // TODO - Generated method body
+//    myOwnData->
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
-    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
-    if(ttmsg->getClientID() == clientID)
-    {
-        //I manage the message..if and only if i'm not failed
-        if(!fm->isFailed())
-           std::cout << "I received this message" << ttmsg->getData() << "from" << ttmsg->getReplicaID() << std::endl;
-
-    }
+    //TODO - Generated method body
+//    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg)
+//    if(ttmsg->clientID == this.clientID)
+//    {
+//        //I manage the message..if and only if i'm not failed
+//        if(!fm->isFailed())
+//            std::cout << "I received this message" << ttmsg.getData() << "from" << ttmsg.getReplicatID() << std::endl;
+//
+//    }
 
 
 }

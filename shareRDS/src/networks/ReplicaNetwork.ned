@@ -13,32 +13,25 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package sharerds.multicast;
+package sharerds.networks;
 
-//enum OperationType {
-//	WRITE = 1;
-//	UPDATE = 0;
-//};
-//const WRITE_OP = 1;
-//const UPDATE_OP = 0;
-
-simple BasicMulticast
+//
+// TODO auto-generated module
+//
+simple ReplicaNetwork
 {
     parameters:
-        int replicaID;				// replicaID for InvocationManager
-        int operation = default(-1);		// operation in request
-	        // operation = 0 	// UPDATE
-	        // operation = 1 	// WRITE
+        int replicaID = default(-1);		// ID of the owner of this network
     gates:
-        input inRmtWrtProtocol;				// input gate for receiving request from RemoteWriteProtocol
-        output outInvocMan;			// output gate for sending request to InvocationManager
-        input inLamportClk;
+        input inRequests[2];		//from RemoteWriteProtocol
+        input inClients[];
+		input inReplicas[];
+		input inAnswer;			// from InvocationManager
+		input inLamportClk;
+		
+		output outRequests[2] ;	// to RemoteWriteProtocol
+		output outClients[];
+		output outReplicas[];
+		output outAnswer;       	// to InvocationManager
         output outLamportClk;
-        
-        input inReplica[5];
-        
-        
-    //connections:
-        //TODO: define all connections below if needed
-    
 }

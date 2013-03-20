@@ -12,19 +12,23 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
-package sharerds.test;
-//
-// TODO auto-generated module
-//
-simple Txc
-{
-      parameters:
-        @display("i=block/routing");
-        bool sendInitialMessage = default(false);
-    gates:
-        input in;
-        output out;
-    
-        
-}
 
+#ifndef __SHARERDS_REPLICANETWORK_H_
+#define __SHARERDS_REPLICANETWORK_H_
+
+#include <omnetpp.h>
+#include "SystemMsg_m.h"
+
+class ReplicaNetwork : public cSimpleModule
+{
+private:
+    int replicaID;      //ID of the running replica module
+    //TODO: make a real queue
+    std::vector<SystemMsg> queuingMsg;
+
+protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
+};
+
+#endif
