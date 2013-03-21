@@ -58,7 +58,7 @@ SystemMsg* Application::generateMessage(){
     ttmsg->setReplicaID(intuniform(0, maxNReplica));
     ttmsg->setOperation(intuniform(0,1));
     ttmsg->setData(intuniform(-1000, 1000));
-    ttmsg->setDataID(((intuniform(0,100)%2)==0) : (intuniform(0,25)+'a') ?(intuniform(0,25)+'A'));
+    ttmsg->setDataID(((intuniform(0,100)%2)==0) ?(const char *) 'a' + rand() % (('z'-'a') + 1): (const char *)'A' + rand() % (('Z'-'A') + 1));
 
     return ttmsg;
 }
@@ -66,14 +66,14 @@ int Application::getMaxNReplica(){
     return maxNReplica;
 }
 void Application::setMaxNReplica(int numberOfReplica){
-    this.maxNReplica =numberOfReplica;
+    maxNReplica = numberOfReplica;
 }
 int Application::getClientID()
 {
-    return this.clientID;
+    return clientID;
 }
-void Application::setClientID(String clientID)
+void Application::setClientID(int clientID)
 {
-    this.clientID = clientID;
+    clientID = clientID;
 }
 

@@ -146,7 +146,7 @@ depend:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/Application.o: application/Application.cc \
-	application/Application.h
+	application/Application.h 
 $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \
 	concurrency/DistMutualExclusion.h
 $O/failure/ClientReincarnation.o: failure/ClientReincarnation.cc \
@@ -174,3 +174,5 @@ $O/synchronization/LamportClock.o: synchronization/LamportClock.cc \
 $O/test/Txc.o: test/Txc.cc \
 	test/Txc.h
 
+$O/messages/SystemMsg_m.o: messages/SystemMsg_m.cc \
+	messages/SystemMsg_m.h

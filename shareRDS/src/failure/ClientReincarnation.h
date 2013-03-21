@@ -3,11 +3,12 @@
 
 #include <omnetpp.h>
 #include <string>
-#include "FailureManager.h"
-#include "ApplicationManager.h"
 
 class ClientReincarnation : public cSimpleModule
 {
+    protected:
+        void initialize();
+        void handleMessage(cMessage *msg);
 };
 
 #endif
