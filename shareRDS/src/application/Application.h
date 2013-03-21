@@ -9,7 +9,7 @@ class Application : public  cSimpleModule
 {
     public:
         int clientID;
-        int maxNReplicat;
+            int maxNReplica;
         std::map<std::string,int> ownedDataItems;
         //get and set methods
         virtual int getMaxNReplica();
@@ -19,8 +19,8 @@ class Application : public  cSimpleModule
         virtual int getDataItem(std::string dataID);
         virtual void setDataItem(int dataValue);
     protected:
-        virtual SystemMsg *generateMEssage();
-        virtual forwardMessage(SystemMsg *ttmsg);
+        virtual SystemMsg *generateMessage();
+        virtual void forwardMessage(SystemMsg *ttmsg);
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
 };

@@ -1,11 +1,11 @@
 #include "Application.h"
-#include "../messages/SystemMsg_m.h"
+#include "SystemMsg_m.h"
 
 Define_Module(Application);
 void Application::initialize()
 {
-    this.clientID.setClientID(par("clientID"));
-    this.maxNReplica.setMaxNReplica(par("maxNReplica"));
+    setClientID(par("clientID"));
+    setMaxNReplica(par("maxNReplica"));
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
     SystemMsg *ttmsg = new SystemMsg();
@@ -18,21 +18,21 @@ void Application::handleMessage(cMessage *msg)
     if ((ttmsg->getClientID()== -1)
             &&(ttmsg->getReplicaID()== -1)
                 &&(ttmsg->getLamportClock()== -1)
-                    &&(ttmsg->getReplicaCode() == -1)
+                    &&(ttmsg->getReplyCode() == -1)
                         &&(ttmsg->getOperation()== -1)){
         // I received a message from myself
         scheduleAt(4.0, ttmsg);
-        SystemMsg msgGen = Application::generateMessage();
+        SystemMsg *msgGen = Application::generateMessage();
         send (msgGen, "out");
     }
-    else if (clientID == ttmsg->clientID){
+    else if (clientID == ttmsg->getClientID()){
         int operation = ttmsg->getOperation();
-        int isSuccess = ttmsg->getReplicaCode();
-        if ((operation == READ) && (!ttmsg->isSuccess)){
-            EV<<"CLIENT_APPLICATION: ("<< clientID <<") ERROR no data item with id " << ttmsg->msgDataID << "\n";
+        int isSuccess = ttmsg->getReplyCode();
+        if ((operation == READ) && (!isSuccess)){
+            EV<<"CLIENT_APPLICATION: ("<< clientID <<") ERROR no data item with id " << ttmsg->getDataID() << "\n";
         }
         //to check if operation_var can be equal to SUCCESS
-        else if ((operation == READ) && (ttmsg->isSuccess)){
+        else if ((operation == READ) && (isSuccess)){
             //Here I have to add to my local copy the value read from the replica and saved
             //item
          /*   if (ownedDataItems.at(ttmsg->getDataID())== std::result_out_of_range){
@@ -40,25 +40,25 @@ void Application::handleMessage(cMessage *msg)
             }*/
             ownedDataItems[ttmsg->getDataID()]=ttmsg->getData();
         }
-        else if ((operation == WRITE)&&(!ttmsg->isSuccess)){
-            EV<<"CLIENT_APPLICATION: ("<< clientID <<")ERROR fail  write our datavalue at replica "<< ttmsg->replicaID <<"\n";
+        else if ((operation == WRITE)&&(!isSuccess)){
+            EV<<"CLIENT_APPLICATION: ("<< clientID <<")ERROR fail  write our datavalue at replica "<< ttmsg->getReplicaID() <<"\n";
         }
-        else if ((operation == WRITE) && (ttmsg->isSuccess)){
-            EV<<"CLIENT_APPLICATION: ("<< clientID <<")NOTIFICATION data written correctly at replica "<< ttmsg->replicaID <<"\n";
+        else if ((operation == WRITE) && (isSuccess)){
+            EV<<"CLIENT_APPLICATION: ("<< clientID <<")NOTIFICATION data written correctly at replica "<< ttmsg->getReplicaID() <<"\n";
         }
         delete ttmsg;
     }
 }
-
+void forwardMessage(SystemMsg * ttmsg){}
 SystemMsg* Application::generateMessage(){
     //This is the function that generates random messages to replica
 
     SystemMsg *ttmsg = new SystemMsg();
-    ttmsg->setClientId(this.clientID);
+    ttmsg->setClientID(clientID);
     ttmsg->setReplicaID(intuniform(0, maxNReplica));
     ttmsg->setOperation(intuniform(0,1));
     ttmsg->setData(intuniform(-1000, 1000));
-    ttmsg->setDataID(intuniform(0,100)%2==0 : intuniform(0,25)+'a' ? intuniform(0,25)+'A');
+    ttmsg->setDataID(((intuniform(0,100)%2)==0) : (intuniform(0,25)+'a') ?(intuniform(0,25)+'A'));
 
     return ttmsg;
 }
