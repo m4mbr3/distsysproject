@@ -13,17 +13,17 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include "Application.h"
+package sharerds.application;
 
-
-Define_Module(Application);
-
-void Application::initialize()
+//
+// Generates messages of read or write into the system from a client of the system
+//
+simple AppMsgGenerator
 {
-    //TODO
-}
-
-void Application::handleMessage(cMessage *msg)
-{
-    //TODO
+    parameters:
+        int clientID = default(-1);
+        int numberReplicas = default(-1);
+    gates:
+        input replicasIn[numberReplicas];
+        output replicasOut[numberReplicas];
 }

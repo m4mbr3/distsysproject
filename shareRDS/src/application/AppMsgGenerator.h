@@ -13,16 +13,30 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef __SHARERDS_APPLICATION_H_
-#define __SHARERDS_APPLICATION_H_
+#ifndef __SHARERDS_APPMSGGENERATOR_H_
+#define __SHARERDS_APPMSGGENERATOR_H_
 
 #include <omnetpp.h>
+#include "SystemMsg_m.h"
 
 /**
- * TODO
+ * This class simulates the client/replica generation messages to the replica system
  */
-class Application : public cSimpleModule
+class AppMsgGenerator : public cSimpleModule
 {
+   private:
+   //the client id
+    int cID;
+    //the total number of replicas
+    int nReplicas;
+    //The timer for start sending messages to the server, simulating client requests
+    cMessage* timeToSendMessage;
+    //The replica id to which it is connected
+    int replicaID;
+    //the current data id
+    std::string dataID;
+    //build a message to be send into the network
+    cMessage* getMessage();
 
   protected:
     virtual void initialize();

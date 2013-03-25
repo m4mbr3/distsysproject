@@ -36,11 +36,11 @@ module Replica
         //For receiving the requests coming from the clients of the simulation
         input inClients[numberClients];
         //For receiving the requests coming from the other replicas in the system
-        input inReplicas[numberReplicas-1];
+        input inReplicas[numberReplicas];
         //For sending answers to the clients in the system
         output outClients[numberClients];
         //For sending messages to the other replicas in the system
-        output outReplicas[numberReplicas-1];
+        output outReplicas[numberReplicas];
     submodules:
         //The invocation manager component
         im: InvocationManager {
@@ -73,9 +73,9 @@ module Replica
                 @display("p=99,216;i=block/broadcast");
             gates:
                 inClients[numberClients];
-                inReplicas[numberReplicas-1];
+                inReplicas[numberReplicas];
                 outClients[numberClients];
-                outReplicas[numberReplicas-1];
+                outReplicas[numberReplicas];
         }
         //the lamport clock, WE SHOULD SET UP THE REPLICA ID AS PARAMETER
         lc: LamportClock {

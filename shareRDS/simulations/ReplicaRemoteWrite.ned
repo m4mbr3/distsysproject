@@ -15,7 +15,8 @@
 
 package sharerds.simulations;
 
-import sharerds.compmodules.*;
+import sharerds.compmodules.Replica;
+import sharerds.application.AppMsgGenerator;
 
 network ReplicaRemoteWrite
 {
@@ -24,28 +25,40 @@ network ReplicaRemoteWrite
         int nClients = default(1);
 
     submodules:
-        r1: Replica {
+        r0: Replica {
             parameters:
+                rID =0;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
                 @display("p=94,87");
         }
-        r2: Replica {
+        r1: Replica {
             parameters:
+                rID =1;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
                 @display("p=179,157");
         }
         //put a client
+        client: AppMsgGenerator{
+        	 parameters:
+        	    clientID=1;
+                numberReplicas = nReplicas;
+        
+        };
     connections allowunconnected:
 
         //Connecting all the replicas to all the ones in the system
-        for k=0..r1.numberReplicas-1 {
-            r1.outReplicas[k] --> r2.inReplicas[k];
+        for k=0..r0.numberReplicas-1, if k!=0 {
+            r0.outReplicas[k] --> r1.inReplicas[k];
         }
-        for k=0..r2.numberReplicas-1 {
-            r2.outReplicas[k] --> r1.inReplicas[k];
+        for k=0..r1.numberReplicas-1, if k!=1 {
+            r1.outReplicas[k] --> r0.inReplicas[k];
         }
         //connecting the client to the replicas
-
+		client.replicasOut[0] --> r0.inClients[0];
+		client.replicasOut[1] --> r1.inClients[0];
+		
+		r0.outClients[0] --> client.replicasIn[0];
+		r1.outClients[0] --> client.replicasIn[1];
 }
