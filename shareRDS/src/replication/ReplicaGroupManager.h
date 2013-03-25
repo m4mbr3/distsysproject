@@ -30,14 +30,11 @@
 class ReplicaGroupManager : public cSimpleModule
 {
     private:
-        //The number of replicas available (all the replicas from 0 to nReplicas are available)
-        int nReplicas;
-        //Thise replica ID in which the replica group manager is installed
-        int replicaID;
-
+        std::vector<int> ReplicaIDs;
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
+
 };
 
 #endif

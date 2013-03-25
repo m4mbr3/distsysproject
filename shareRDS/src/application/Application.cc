@@ -1,5 +1,5 @@
 #include "Application.h"
-#include "SystemMsg_m.h"
+#include "../messages/SystemMsg_m.h"
 
 Define_Module(Application);
 void Application::initialize()

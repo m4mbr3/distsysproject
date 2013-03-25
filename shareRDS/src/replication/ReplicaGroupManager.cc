@@ -20,8 +20,6 @@ Define_Module(ReplicaGroupManager);
 
 void ReplicaGroupManager::initialize()
 {
-    //Initialize the module with the number of replicas provided
-    nReplicas = par("numberReplicas");
     //Initialize the replica ID of the replica that has the group manager module
     replicaID = par("replicaID");
     //Validating that a replica ID was defined
@@ -29,17 +27,16 @@ void ReplicaGroupManager::initialize()
     if(replicaID == -1)
         throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
 
+    //I receive the sequence of IDs in a string, here i divide them into tokens
+    cStringTokenizer tokenizer (par("ReplicaIDs"));
+    while(tokenizer.hasMoreTokens())
+        ReplicaIDs.push_back(tokenizer.nextToken());
 }
 
 
 void ReplicaGroupManager::handleMessage(cMessage *msg)
 {
-    //1. We retrieve the msg
-    SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-    //2.The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
-    EV<< "REPLICA_GROUP_MANAGER ("<< replicaID <<") Received message: " << sMsg->getName();
-    //3.Sending the message to the module in charge of managing the replication protocol
-    send(msg, "out");
-    EV<< "REPLICA_GROUP_MANAGER ("<< replicaID <<") Received message: " << sMsg->getName();
+    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
 
+    if (ttmsg->)
 }
