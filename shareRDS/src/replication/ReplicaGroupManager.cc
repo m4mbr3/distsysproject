@@ -33,10 +33,33 @@ void ReplicaGroupManager::initialize()
         ReplicaIDs.push_back(tokenizer.nextToken());
 }
 
-
+int ReplicaGroupManager::getClientID(){
+    return clientID;
+}
+void ReplicaGroupManager::setClientID(int clientID){
+    this.clientID = clientID;
+}
+SystemMsg* ReplicaGroupManager::generateReincarnationMessage(int replica, int clientID){
+    SystemMsg * ttmsg = new SystemMsg();
+    ttmsg->setClientID(clientID);
+    ttmsg->setReplicaID(replica);
+    ttmsg->setIsClientReincarnation(true);
+    return ttmsg;
+    }
 void ReplicaGroupManager::handleMessage(cMessage *msg)
 {
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
 
-    if (ttmsg->)
+    if (ttmsg->isClientReincarnation){
+        // In this if branch I send a broadcast to all my connected replica
+        // to say i'm alive
+        int i;
+        for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
+            send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out2");// i send messages to all my connected replica.
+        }
+    }
+    else if (){
+        //TODO other stuff
+
+    }
 }

@@ -39,32 +39,13 @@ enum OperationType {
     DELETE = 6
 };
 
-/**
- * Enum generated from <tt>messages/SystemMsg.msg</tt> by opp_msgc.
- * <pre>
- * enum ReplyCodeType{
- * FAIL=0;
- * SUCCESS=1;
- * };
- * </pre>
- */
-enum ReplyCodeType {
-    FAIL = 0,
-    SUCCESS = 1
-};
-
-/**
- * Class generated from <tt>messages/SystemMsg.msg</tt> by opp_msgc.
- * <pre>
- * message SystemMsg {
- *     int clientID =-1;		
- *     int replicaID=-1;		
- *     int replicaOwnerID = -1;	
+ *     int replicaID=-1;
+ *     int replicaOwnerID = -1;
  *     int lamportClock=-1;
  *     int replyCode=-1 @enum(ReplyCodeType);
  *     int operation=-1 @enum(OperationType);
  *     string dataID;
- *     int data;   
+ *     int data;
  * };
  * </pre>
  */
@@ -79,7 +60,7 @@ class SystemMsg : public ::cMessage
     int operation_var;
     opp_string dataID_var;
     int data_var;
-
+    bool isClientReincarnation_var;
   private:
     void copy(const SystemMsg& other);
 
@@ -113,6 +94,8 @@ class SystemMsg : public ::cMessage
     virtual void setDataID(const char * dataID);
     virtual int getData() const;
     virtual void setData(int data);
+    virtual bool getIsClientReincarnation();
+    virtual void setIsClientReincarnation(bool isClientReincarnation)
 };
 
 inline void doPacking(cCommBuffer *b, SystemMsg& obj) {obj.parsimPack(b);}

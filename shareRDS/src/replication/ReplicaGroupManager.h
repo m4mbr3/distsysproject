@@ -29,8 +29,12 @@
  */
 class ReplicaGroupManager : public cSimpleModule
 {
-    private:
+    public:
+        int clientID;
         std::vector<int> ReplicaIDs;
+        SystemMsg* generateReincarnationMessage(int replica);
+        int getClientID();
+        void setClientID(int clientID);
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
