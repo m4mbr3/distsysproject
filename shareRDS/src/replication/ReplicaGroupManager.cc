@@ -23,7 +23,7 @@ void ReplicaGroupManager::initialize()
     //Initialize the replica ID of the replica that has the group manager module
     replicaID = par("replicaID");
     //Validating that a replica ID was defined
-
+    clientID = par("clientID");
     if(replicaID == -1)
         throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
 
@@ -62,4 +62,5 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         //TODO other stuff
 
     }
+    delete ttmsg;
 }

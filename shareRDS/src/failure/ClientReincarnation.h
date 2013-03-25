@@ -6,9 +6,13 @@
 
 class ClientReincarnation : public cSimpleModule
 {
+    public:
+        SystemMsg* ttmsg;
+        int clientID;
     protected:
         void initialize();
         void handleMessage(cMessage *msg);
+
 };
 
 #endif

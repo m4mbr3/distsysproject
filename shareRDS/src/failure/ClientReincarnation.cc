@@ -15,17 +15,28 @@
 
 #include "ClientReincarnation.h"
 #include <string>
-
+#include "SystemMsg_m.h"
 Define_Module(ClientReincarnation);
 
 void ClientReincarnation::initialize()
 {
-   // TODO - Generated method body
-
+    // TODO - Generated method body
+    clientID = par("clientID");
+    ttmsg = new SystemMsg();
+    scheduleAt("0.0",ttmsg);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
     //TODO - Generated method body
-
+    SystemMsg *tmsg = check_and_cast<SystemMsgi*> (msg);
+    if (ttmsg == tmsg){
+        //I sent a message to myself
+        SystemMsg* msg = new SystemMsg();
+        //I created a new message with only the isClientReincarnation variable
+        //setted.
+        msg->setIsClientReincarnation(true);
+        send(msg, "out");
+    }
+    delete tmsg;
 }

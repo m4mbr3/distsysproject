@@ -2,12 +2,13 @@
 #define __SHARERDS_APPLICATION_H_
 
 #include <cstdlib>
-#include <SystemMsg_m.h>
+#include "SystemMsg_m.h"
 using namespace std;
 
 class Application : public  cSimpleModule
 {
     public:
+        SystemMsg *ttmsg;
         int clientID;
         int maxNReplica;
         std::map<std::string,int> ownedDataItems;

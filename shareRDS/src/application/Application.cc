@@ -1,5 +1,5 @@
 #include "Application.h"
-#include "../messages/SystemMsg_m.h"
+#include "SystemMsg_m.h"
 
 Define_Module(Application);
 void Application::initialize()
@@ -8,18 +8,14 @@ void Application::initialize()
     setMaxNReplica(par("maxNReplica"));
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
-    SystemMsg *ttmsg = new SystemMsg();
+    ttmsg = new SystemMsg();
     scheduleAt(3.0, ttmsg);
 }
 
 void Application::handleMessage(cMessage *msg)
 {
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
-    if ((ttmsg->getClientID()== -1)
-            &&(ttmsg->getReplicaID()== -1)
-                &&(ttmsg->getLamportClock()== -1)
-                    &&(ttmsg->getReplyCode() == -1)
-                        &&(ttmsg->getOperation()== -1)){
+    if (this->ttmsg == ttmsg){
         // I received a message from myself
         scheduleAt(4.0, ttmsg);
         SystemMsg *msgGen = Application::generateMessage();
