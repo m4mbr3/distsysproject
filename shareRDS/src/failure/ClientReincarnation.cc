@@ -1,4 +1,3 @@
-//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -14,8 +13,7 @@
 //
 
 #include "ClientReincarnation.h"
-#include <string>
-#include "SystemMsg_m.h"
+
 Define_Module(ClientReincarnation);
 
 void ClientReincarnation::initialize()

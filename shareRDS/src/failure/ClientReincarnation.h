@@ -3,6 +3,7 @@
 
 #include <omnetpp.h>
 #include <string>
+#include "SystemMsg_m.h"
 
 class ClientReincarnation : public cSimpleModule
 {
