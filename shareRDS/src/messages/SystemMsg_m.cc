@@ -197,14 +197,6 @@ void SystemMsg::setData(int data)
 {
     this->data_var = data;
 }
-bool SystemMsg::getIsClientReincarnation()
-{
-    return isclientReincarnation_var;
-}
-void SystemMsg::setIsClientReincarnation(bool isClientReincarnation)
-{
-    this->isclientReincarnation_var = isClientReincarnation;
-}
 
 class SystemMsgDescriptor : public cClassDescriptor
 {
@@ -226,7 +218,7 @@ class SystemMsgDescriptor : public cClassDescriptor
     virtual bool setFieldAsString(void *object, int field, int i, const char *value) const;
 
     virtual const char *getFieldStructName(void *object, int field) const;
-    virrtual void *getFieldStructPointer(void *object, int field, int i) const;
+    virtual void *getFieldStructPointer(void *object, int field, int i) const;
 };
 
 Register_ClassDescriptor(SystemMsgDescriptor);
