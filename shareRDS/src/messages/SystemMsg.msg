@@ -36,5 +36,5 @@ message SystemMsg {
     string dataID;
     int data;
     bool isClientReincarnation=false;
-
+    bool isInvocationManager=true;
 };

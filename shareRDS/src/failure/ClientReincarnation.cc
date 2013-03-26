@@ -36,7 +36,7 @@ void ClientReincarnation::handleMessage(cMessage *msg)
         //setted to say i'm alive again.
         msg->setIsClientReincarnation(true);
         send(msg, "out");
-        scheduleAt("500",reinc);
+        scheduleAt(intuniform(0,500),reinc);
         delete tmsg;
     }
     else if (tmsg == reinc){
@@ -57,6 +57,6 @@ void ClientReincarnation::handleMessage(cMessage *msg)
         //and i schedule the reincarnation message
         //to myself
         send(msg,"out");
-        scheduleAt(intuniform(0,500),reinc);
+        scheduleAt(intuniform(0,500),tmsg);
     }
 }

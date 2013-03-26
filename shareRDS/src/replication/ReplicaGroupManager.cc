@@ -68,8 +68,8 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             dead = true;
         }
     }
-    if(!dead){
-        if (){
+    else if(!dead){
+        if (ttmsg->getReplicaID() == -1 ){
             //TODO other stuff
 
         }
