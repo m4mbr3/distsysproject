@@ -61,7 +61,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
                 send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out2");// i send messages to all my connected replica.
             }
             EV << "REPLICAGROUPMANAGER sended alive messages to every replica " << endl;
-            dead =false;
+            dead = false;
         }
         else{
             EV << "REPLICAGROUPMANAGER I'm dead "  <<endl;
