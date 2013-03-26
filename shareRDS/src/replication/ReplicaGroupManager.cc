@@ -14,7 +14,6 @@
 //
 
 #include "ReplicaGroupManager.h"
-#include "SystemMsg_m.h"
 
 Define_Module(ReplicaGroupManager);
 
@@ -58,8 +57,13 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
     int gateID = ttmsg->getArrivalGateId();
     if (gateID == gate("in", FROM_WRITEAHEADPROTOCOL)->getId()){
-        if ( !dead){
-
+        if (!dead){
+            //here i forward the message directly to the
+            //the basic network
+            send(ttmsg,"out"+TO_NETWORK);
+        }
+        else{
+            delete ttmsg;
         }
     }
     else if (gateID == gate("in", FROM_CLIENTREINCARNATION)->getId()){
@@ -68,7 +72,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             // to say i'm alive
             int i;
             for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
-                send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out2");// i send messages to all my connected replica.
+                send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out"+TO_NETWORK);// i send messages to all my connected replica.
             }
             EV << "REPLICAGROUPMANAGER sended alive messages to every replica " << endl;
             dead = false;
@@ -79,18 +83,25 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         }
     }
     else if (gateID == gate("in", FROM_INVOCATIONMANAGER)->getId()){
+        //I put a valid ReplicaID
         //if I receive a message from the invocation manager
         //I'll forward directly to the WriteAheadProtocol
         //to log it
         if (!dead){
-
-
+            int res_oracle = intuniform(0, ReplicaGroupManager::ReplicaIDs.length());
+            ttmsg->setReplicaID(ReplicaGroupManager::ReplicaIDs.at(res_oracle));
+            send(ttmsg,"out"+ TO_WRITEAHEADPROTOCOL);
+        }
+        else{
+            delete ttmsg;
         }
     }
     else if (gateID == gate("in", FROM_REPLICAGROUPMANAGER)->getId()){
         if (!dead){
-
+            //I don't know if it is useful
+        }
+        else{
+            delete ttmsg;
         }
     }
-    delete ttmsg;
 }
