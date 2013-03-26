@@ -18,6 +18,10 @@
 
 #include <omnetpp.h>
 
+#define FROM_WRITEAHEADPROTOCOL 0
+#define FROM_CLIENTREINCARNATION 1
+#define FROM_INVOCATIONMANAGER 2
+#define FROM_REPLICAGROUPMANAGER 3
 
 /**
  * The simple module that is in charge of managing the replicas in the

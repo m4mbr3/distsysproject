@@ -50,9 +50,19 @@ SystemMsg* ReplicaGroupManager::generateReincarnationMessage(int replica, int cl
     }
 void ReplicaGroupManager::handleMessage(cMessage *msg)
 {
-    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
+    //GATE in0 = WriteAheadProtocol
+    //GATE in1 = ClientReincarnation
+    //GATE in2 = InvocationManager
+    //GATE in3 = ReplicaGroupManager itself
 
-    if (ttmsg->getIsClientReincarnation()){
+    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
+    int gateID = ttmsg->getArrivalGateId();
+    if (gateID == gate("in", FROM_WRITEAHEADPROTOCOL)->getId()){
+        if ( !dead){
+
+        }
+    }
+    else if (gateID == gate("in", FROM_CLIENTREINCARNATION)->getId()){
         if(ttmsg->getReplyCode() == 1){
             // In this if branch I send a broadcast to all my connected replica
             // to say i'm alive
@@ -68,9 +78,17 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             dead = true;
         }
     }
-    else if(!dead){
-        if (ttmsg->getReplicaID() == -1 ){
-            //TODO other stuff
+    else if (gateID == gate("in", FROM_INVOCATIONMANAGER)->getId()){
+        //if I receive a message from the invocation manager
+        //I'll forward directly to the WriteAheadProtocol
+        //to log it
+        if (!dead){
+
+
+        }
+    }
+    else if (gateID == gate("in", FROM_REPLICAGROUPMANAGER)->getId()){
+        if (!dead){
 
         }
     }
