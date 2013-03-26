@@ -35,5 +35,6 @@ message SystemMsg {
     int operation=-1 @enum(OperationType);
     string dataID;
     int data;
-    bool isClientReincarnation;
+    bool isClientReincarnation=false;
+
 };

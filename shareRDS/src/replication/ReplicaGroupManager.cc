@@ -20,6 +20,8 @@ Define_Module(ReplicaGroupManager);
 
 void ReplicaGroupManager::initialize()
 {
+    //I start  as an alive client
+    dead = false;
     //Initialize the replica ID of the replica that has the group manager module
     replicaID = par("replicaID");
     //Validating that a replica ID was defined
@@ -50,17 +52,27 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
 {
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
 
-    if (ttmsg->isClientReincarnation){
-        // In this if branch I send a broadcast to all my connected replica
-        // to say i'm alive
-        int i;
-        for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
-            send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out2");// i send messages to all my connected replica.
+    if (ttmsg->getIsClientReincarnation()){
+        if(ttmsg->getReplyCode() == 1){
+            // In this if branch I send a broadcast to all my connected replica
+            // to say i'm alive
+            int i;
+            for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
+                send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out2");// i send messages to all my connected replica.
+            }
+            EV << "REPLICAGROUPMANAGER sended alive messages to every replica " << endl;
+            dead =false;
+        }
+        else{
+            EV << "REPLICAGROUPMANAGER I'm dead "  <<endl;
+            dead = true;
         }
     }
-    else if (){
-        //TODO other stuff
+    if(!dead){
+        if (){
+            //TODO other stuff
 
+        }
     }
     delete ttmsg;
 }
