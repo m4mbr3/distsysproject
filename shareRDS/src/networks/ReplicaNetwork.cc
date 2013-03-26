@@ -27,128 +27,234 @@ Define_Module(ReplicaNetwork);
 void ReplicaNetwork::initialize()
 {
     // Initialize the replica ID of the replica that has the group manager module
-    replicaID = par("replicaID");
+    myReplicaID = par("replicaID");
     // Validating that a replica ID was defined
-    if(replicaID == -1)
-        throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
+    if(myReplicaID == -1)
+        throw cRuntimeError("Invalid replica ID %d; must be >= 0", myReplicaID);
 
-    //TODO: create a queue to store msg
+    lamportClock = 0;
+    WATCH(lamportClock);
 
+    lcLastMsgSent = -1;
+
+    timeToProcessRequest = new cMessage("processRequest");
+
+    // schedule to send msg to request to process queuing msg
+    // send this to InvocationManager
+    scheduleAt(simTime() + TIMER_OFFSET, timeToProcessRequest);
+
+    timeToSendOutRequest = new cMessage("sendOutRequest");
+    // schedule to process outQueue
+    scheduleAt(simTime() + TIMER_OFFSET, timeToSendOutRequest);
+
+    timeToCheckAcks = new cMessage("checkAcks");
+}
+
+void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
+    int rcvLamportClock =msg->getLamportClock();
+    // updating the local clock of the module usign the received value
+    if(rcvLamportClock >lamportClock)
+    {
+        lamportClock = rcvLamportClock +1;
+    }
+    else
+    {
+        lamportClock = lamportClock + 1;
+    }
 }
 
 void ReplicaNetwork::handleMessage(cMessage *msg)
 {
-    // retrieve the msg and cast to SystemMsg
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+    lamportClockHandle(sMsg);
 
-    // retrieve the gateID of the gate from which we received the msg
-    int gateID = sMsg->getArrivalGateId();
+    // DONE inQueue-----------------------------------------------------
+    if (msg == timeToProcessRequest) {
+        int size = inQueue.size();
+        for (int i = 0; i < size; i++) {
+            SystemMsg* sMsg = inQueue.at(i);
 
-    // retrieve other data from the msg
-    int msgClientID = sMsg->getClientID();
-    int msgReplicaID = sMsg->getReplicaID();
-    int msgLamportClk = sMsg->getLamportClock();
-    int msgReplyCode = sMsg->getReplyCode();
-    int msgOperation = sMsg->getOperation();
-    std::string msgDataID = sMsg->getDataID();
+            // retrieve the gateID of the gate from which we received the msg
+            int gateID = sMsg->getArrivalGateId();
 
-    // retrieve the treeID of the msg because it won't change when cloning the msg
-    int msgTreeID = sMsg->getTreeId();
+            // retrieve other data from the msg
+            int msgClientID = sMsg->getClientID();
+            int msgReplicaID = sMsg->getReplicaID();
+//            int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
+//            int msgLamportClk = sMsg->getLamportClock();
+            int msgReplyCode = sMsg->getReplyCode();
+            int msgOperation = sMsg->getOperation();
+            std::string msgDataID = sMsg->getDataID();
 
-    /*if (gateID == findGate("inRequests")){
-        if (gateID == gate("inRequests", 0)->getId()) {
-        // the msg is sent to inRequest[0], which means it comes from RemoteWriteProtocol for remoteWrite
-            //TODO: do we need to check if the msg is on top of the queue or not?
-            send(sMsg, gate("outReplicas", msgReplicaID));
-        }
-        else if (gateID == gate("inRequests", 1)->getId()) {
-        // the msg is sent to inRequest[1], which means it comes from RemoteWriteProtocol for remoteUpdate
-            //TODO: do we need to check if the msg is on top of the queue or not?
-            // forward the msg to ALL replicas
-            for (int i = 0; i < gateSize("outReplicas"); i++) {
-                send(sMsg, gate("outReplicas", i));
-            }
-        }
-    }
-    // the msg is send to one of inClients gates, which means it comes from a client
-    else if (gateID == findGate("inClients")) {
-        // iterate through all inClients gates:
-        for (int i = 0; i < gateSize("inClients"); i++){
-            // to find the sender client
-            if (gateID == findGate("inClients", i)) {
-                // check the operation of the msg:
+            // retrieve the treeID of the msg because it won't change when cloning the msg
+            int msgTreeID = sMsg->getTreeId();
 
-                // READ request from a client
-                if (msgOperation == READ) {
-                    // boolean flag to mark if the READ request is younger than
-                    bool isYoung = true;
-                    // iterate from the last item in queue
-                    for (int j = queuingMsg.size(); j >= 0 ; --j) {
-                        // compare with msg on the same dataID
-                        if (msgDataID == queuingMsg.at(j).getDataID()) {
-                            // incoming msg is older than a WRITE in queue
-                            if ((msgLamportClk < queuingMsg.at(j).getLamportClock()) && (queuingMsg.at(j).getOperation() == WRITE)) {
-                                //TODO reject because the READ request is older than existing WRITE in queue
-                                isYoung = false;
-                                sMsg->setReplyCode(FAIL);
-                                send(sMsg, gate("outClients", i));
-                                break;  // a break here will interrupt the FOR iteration?
-                            }
-                        }
-                    }
-                    // incoming READ request is younger than any WRITE in queue
-                    if (isYoung) {
+            // if the incoming msg is an ACK answer of a RemoteUpdate from another replica
+            if ((gateID == findGate("inReplicas", myReplicaID)) && (msgOperation == ACK)) {
+                std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
+                try {
+                    //TODO: check if we need to use * or & or not
+                    inAck = msgsAck.at(msgTreeID);
+                    inAck[msgReplicaID] = true;
 
-
-                    }
+                } catch (const std::out_of_range& e) {
+                    //TODO: do something
                 }
-                else if (msgOperation == WRITE) {
-                // WRITE request from a client
+            }
+            // incoming msg is an answer for a RemoteWrite request
+            else if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgReplyCode != -1)) {
+                // check if the msg is on top of the outQueue or not
+                // if it's on top then send
+                send(msg, "outAnswer", RW_OUT_GATE);
+                lcLastMsgSent = lamportClock;
+            }
+            // incoming msg is from a Client
+            else if (gateID == findGate("inClients", msgClientID)){
+                send(msg, "outRequest");
+                lcLastMsgSent = lamportClock;
+            }
+        }
+    }
+
+
+    // DONE outQueue-----------------------------------------------------
+    else if (msg == timeToSendOutRequest) {
+        int size = outQueue.size();
+        for (int i = 0; i < size; i++) {
+            SystemMsg* sMsg = outQueue.at(i);
+
+            // retrieve the gateID of the gate from which we received the msg
+//            int gateID = sMsg->getArrivalGateId();
+
+            // retrieve other data from the msg
+            int msgClientID = sMsg->getClientID();
+            int msgReplicaID = sMsg->getReplicaID();
+            int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
+//            int msgLamportClk = sMsg->getLamportClock();
+            int msgReplyCode = sMsg->getReplyCode();
+//            int msgOperation = sMsg->getOperation();
+            std::string msgDataID = sMsg->getDataID();
+
+            sMsg->setReplicaID(myReplicaID);
+
+            // retrieve the treeID of the msg because it won't change when cloning the msg
+            int msgTreeID = sMsg->getTreeId();
+
+            if (msgReplicaID == -1) {
+                send(msg, "outClients", msgClientID);
+            }
+            // incoming msg is an answer of a RemoteUpdate request, we need to send it to replicaOwnerID
+            else if (msgReplicaOwnerID != myReplicaID) {
+                sMsg->setOperation(ACK);
+                send(msg, "outReplicas", msgReplicaOwnerID);
+            }
+
+            else if (msgReplicaOwnerID == myReplicaID) {
+                // multicast
+                if (msgReplyCode == -1) {
+
+                    msgsWaitingForAck[msgTreeID] = sMsg;
+                    int noOfReplicas = gateSize("outReplicas");
+                    std::vector<bool> temp(noOfReplicas);
+                    for (int i = 0; i < noOfReplicas; i++) {
+                        temp[i] = false;
+                    }
+                    msgsAck[msgTreeID] = temp;
+
+                    for (int i = 0; gateSize("outReplicas"); i++) {
+                        SystemMsg* outgoingMsg = sMsg->dup();
+                        send(outgoingMsg, "outReplicas",i);
+                    }
+
+                    scheduleAt(simTime() + TIMER_OFFSET, timeToCheckAcks);
                 }
-                //TODO: don't know what to do next =)))
+                // incoming msg is an answer of a RemoteWrite request, we need to send it to the sender
+                else {
+                    send(msg, "outReplicas", msgReplicaID);
+                }
             }
         }
-    }
-    else if (gateID == findGate("inReplicas")){
-    // the msg is sent to one of inReplicas gates, which means it comes from another replica
-        // iterate through all inReplicas gates:
-        for (int i = 0; i < gateSize("inReplicas"); i++) {
-            // to find the correct replica
-            if (gateID == findGate("inReplicas", i)) {
 
+        scheduleAt(simTime() + TIMER_OFFSET, timeToSendOutRequest);
+    }
+
+
+    else if (msg == timeToCheckAcks) {
+        std::map<long, std::vector<bool> >::iterator it;
+        for (it == msgsAck.begin(); it != msgsAck.end(); it++) {
+            int msgID = it->first;
+            bool okToSend = true;
+            int size = (it->second).size();
+            for (int i = 0; i < size; i++) {
+                // check if we already received the ACK or not
+                if (!(it->second)[i]) { // false
+                    okToSend = false;
+                    send(msgsWaitingForAck[msgID], "outReplicas", i);
+                }
+            }
+            if (okToSend) {
+                send(msgsWaitingForAck[msgID], "outAnswers", RU_OUT_GATE);
+                lcLastMsgSent = lamportClock;
+                msgsWaitingForAck.erase(msgID);
+                msgsAck.erase(msgID);
             }
         }
-    }
-    else if (gateID == findGate("inAnswer")) {
-    // the msg is sent to inAnswer gate, which means it is a confirmation msg with replyCode
-    }
-    else if (gateID == findGate("inLamportClk")) {
-    // the msg is sent to inLamportClk
-    // I don't know what it means yet :)))))
-    }*/
 
-    //TODO START EVERYTHING AGAIN 20/3/2013
-
-    // iterate through all inClients gates
-    for (int i = 0; i < gateSize("inClients"); i++) {
-        // if incoming msg is from one of the inClients gate:
-        if (gateID == findGate("inClients", i)) {
-        // then check the msg operation
-            // msg operation is WRITE request from a client
-            if (msgOperation == WRITE) {
-                // send the msg to Lamport clock to set new lamport clock
-                send(sMsg, "outLamportNew");
-            }
-            // msg operation is READ request from a client
-            else if (msgOperation == READ) {
-                // send the msg to Lamport clock to set new lamport clock
-                send(sMsg, "outLamportNew");
-            }
+        if (!msgsWaitingForAck.empty()) {
+            scheduleAt(simTime() + TIMER_OFFSET, timeToCheckAcks);
         }
     }
-    // incoming msg is from inRequests[0]
-    // RemoteWrite from RemoteWriteProtocol
-    if (gateID == findGate("inRequests", 0)) {
+
+    // all other time constants that we received any msgs that we don't process
+    else {
         //
+//        SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+        int msgLamportClk = sMsg->getLamportClock();
+//        int msgReplicaID = sMsg->getReplicaID();
+//        int msgClientID = sMsg->getClientID();
+        int msgGateID = sMsg->getArrivalGateId();
+
+        // incoming msg has lamport clock ealier than already sent-out-msgs for processing inside
+        if (msgLamportClk < lcLastMsgSent) {
+            sMsg->setReplyCode(FAIL);
+            // this is fail, so put it in the outQueue
+            sMsg->setLamportClock(lamportClock);
+            outQueue.push_back(sMsg);
+        }
+        // incoming msg has lamport clock later than lcLastMsgSent
+        else {
+            if ((msgGateID == findGate("inRequests", RW_IN_GATE)) ||
+                    (msgGateID == findGate("inRequests", RU_IN_GATE)) ||
+                    (msgGateID == findGate("inAnswer"))) {
+                sMsg->setLamportClock(lamportClock);
+                outQueue.push_back(sMsg);
+            }
+            else {
+                inQueue.push_back(sMsg);
+                orderInQueue();
+            }
+        }
+    }
+}
+
+void ReplicaNetwork::orderInQueue()
+{
+    bool swapped = true;
+    int j = 0;
+    SystemMsg* tmp;
+    while (swapped) {
+        swapped = false;
+        j++;
+        int inQueueSize = inQueue.size();
+        for (int i = 0; i < inQueueSize - j; i++) {
+            SystemMsg *currentMsg = inQueue[i];
+            SystemMsg *nextMsg = inQueue[i+1];
+            if (currentMsg->getLamportClock() > nextMsg->getLamportClock()) {
+                tmp = currentMsg;
+                currentMsg = nextMsg;
+                nextMsg = tmp;
+                swapped = true;
+            }
+        }
     }
 }

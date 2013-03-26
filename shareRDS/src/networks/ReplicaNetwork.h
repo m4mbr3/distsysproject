@@ -19,12 +19,46 @@
 #include <omnetpp.h>
 #include "SystemMsg_m.h"
 
+/*
+ * INPUT GATES
+ */
+// inRemoteWrite
+#define RW_IN_GATE 0
+// inRemoteUpdate
+#define RU_IN_GATE 1
+/*
+ * OUTPUT GATES
+ */
+// outRemoteWrite
+#define RW_OUT_GATE 0
+// outRemoteUpdate
+#define RU_OUT_GATE 1
+
+// offset for timer to count for sending out request
+#define TIMER_OFFSET 1
+
 class ReplicaNetwork : public cSimpleModule
 {
 private:
-    int replicaID;      //ID of the running replica module
-    //TODO: make a real queue
-    std::vector<SystemMsg> queuingMsg;
+    int myReplicaID;      //ID of the running replica module
+    int lamportClock;         // scalar clock ~ lamportClock
+
+    int lcLastMsgSent;     // timestamp of the last sent msg
+
+    std::map<long, std::vector<bool> > msgsAck;     // queue for acks that are being waited as answers for RU sent out
+    std::map<long, SystemMsg*> msgsWaitingForAck;
+    std::vector<SystemMsg*> inQueue;
+    // queue for requests that are received from outside and in queue for processing
+    // those are msgs from Clients, from Replicas requests or Replicas answers
+
+    std::vector<SystemMsg*> outQueue;      // queue for requests that are in queue for sending out
+
+    cMessage *timeToProcessRequest;    // a self msg to trigger queuing process overtime
+    cMessage *timeToSendOutRequest;     // a self msg to trigger sending out msg overtime
+    cMessage *timeToCheckAcks;
+
+    void lamportClockHandle(SystemMsg *msg);
+    void orderInQueue();
 
 protected:
     virtual void initialize();

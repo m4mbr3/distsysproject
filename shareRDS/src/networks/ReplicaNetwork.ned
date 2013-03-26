@@ -23,16 +23,20 @@ simple ReplicaNetwork
     parameters:
         int replicaID = default(-1);		// ID of the owner of this network
     gates:
-        input inRequests[2];		//from RemoteWriteProtocol
-        input inClients[];
-		input inReplicas[];
-		input inAnswer;			// from InvocationManager
+        input inRemoteRequests[2];		// from RemoteWriteProtocol
+        							// [0] for remoteWrite
+    								// [1] for remoteUpdate
+        input inClients[];			// from clients
+		input inReplicas[];			// from other replica
+		input inAnswer;				// from InvocationManager
 		input inLamportClk;
 		
-		output outRequests[2] ;	// to RemoteWriteProtocol
+		output outAnswer[2] ;		// to RemoteWriteProtocol
+									// [0] for remoteWrite
+									// [1] for remoteUpdate
 		output outClients[];
 		output outReplicas[];
-		output outAnswer;       	// to InvocationManager
+		output outRequest;       	// to InvocationManager
         output outLamportNew;		// to LamportClock for setting new lamport clock value
         output outLamportUpt;		// to Lamport Clock for update lamport clock value only
 }

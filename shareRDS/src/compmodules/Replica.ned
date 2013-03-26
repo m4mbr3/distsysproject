@@ -85,7 +85,7 @@ module Replica
     connections:
         //NW and IM
         //THE NAME NEED TO BE CHANGE FOR outRequest
-        nw.outAnswer --> im.in[0];
+        nw.outRequest --> im.in[0];
         im.out[1] --> nw.inAnswer;
         //RWP and IM
         im.out[0] --> rwp.in[0];
@@ -99,11 +99,11 @@ module Replica
         //RWP and NW
         //remote write
         //CHANGE THE NAME OF OUT REQUESTS TO ANSWERS
-        rwp.out[3] --> nw.inRequests[0];
-        nw.outRequests[0] --> rwp.in[3];
+        rwp.out[3] --> nw.inRemoteRequests[0];
+        nw.outAnswer[0] --> rwp.in[3];
         //remote update
-        rwp.out[4] --> nw.inRequests[1];
-        nw.outRequests[1] --> rwp.in[4];
+        rwp.out[4] --> nw.inRemoteRequests[1];
+        nw.outAnswer[1] --> rwp.in[4];
         //NW and LCLOCK
         nw.outLamportUpt --> lc.inUpt;
         nw.outLamportNew --> lc.inNew;
