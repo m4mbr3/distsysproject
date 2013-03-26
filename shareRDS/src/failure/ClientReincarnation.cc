@@ -22,7 +22,6 @@ void ClientReincarnation::initialize()
     ttmsg = new SystemMsg();
     scheduleAt("0.0",ttmsg);
     reinc = new SystemMsg();
-    reinc.setIsClientReincarnation(true);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
@@ -34,14 +33,12 @@ void ClientReincarnation::handleMessage(cMessage *msg)
         SystemMsg* msg = new SystemMsg();
         //I created a new message with only the isClientReincarnation variable
         //setted to say i'm alive again.
-        msg->setIsClientReincarnation(true);
         send(msg, "out");
         scheduleAt(intuniform(0,500),reinc);
         delete tmsg;
     }
     else if (tmsg == reinc){
         SystemMsg* msg = new SystemMsg();
-        msg->setIsClientReincarnation(true);
         if(reinc->getReplyCode()){
             //set i'm dead message to replica group manager
             //prepare i'm alive message for myself
