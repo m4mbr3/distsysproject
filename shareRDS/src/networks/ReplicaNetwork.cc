@@ -41,13 +41,14 @@ void ReplicaNetwork::initialize()
 
     // schedule to send msg to request to process queuing msg
     // send this to InvocationManager
-    scheduleAt(simTime() + TIMER_OFFSET, timeToProcessRequest);
+    scheduleAt(simTime() + exponential(2.0), timeToProcessRequest);
 
     timeToSendOutRequest = new cMessage("sendOutRequest");
     // schedule to process outQueue
-    scheduleAt(simTime() + TIMER_OFFSET, timeToSendOutRequest);
+    scheduleAt(simTime() + exponential(3.0), timeToSendOutRequest);
 
     timeToCheckAcks = new cMessage("checkAcks");
+    scheduleAt(simTime() + exponential(4.0), timeToCheckAcks);
 }
 
 void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
@@ -65,18 +66,13 @@ void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
 
 void ReplicaNetwork::handleMessage(cMessage *msg)
 {
-    SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-    lamportClockHandle(sMsg);
-
     // DONE inQueue-----------------------------------------------------
     if (msg == timeToProcessRequest) {
         int size = inQueue.size();
         for (int i = 0; i < size; i++) {
             SystemMsg* sMsg = inQueue.at(i);
-
             // retrieve the gateID of the gate from which we received the msg
             int gateID = sMsg->getArrivalGateId();
-
             // retrieve other data from the msg
             int msgClientID = sMsg->getClientID();
             int msgReplicaID = sMsg->getReplicaID();
@@ -114,9 +110,9 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 lcLastMsgSent = lamportClock;
             }
         }
+        //we schedule again the processing timer
+        scheduleAt(simTime() + exponential(10.0),timeToProcessRequest);
     }
-
-
     // DONE outQueue-----------------------------------------------------
     else if (msg == timeToSendOutRequest) {
         int size = outQueue.size();
@@ -166,7 +162,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                         send(outgoingMsg, "outReplicas",i);
                     }
 
-                    scheduleAt(simTime() + TIMER_OFFSET, timeToCheckAcks);
+                    scheduleAt(simTime() + exponential(10.0), timeToCheckAcks);
                 }
                 // incoming msg is an answer of a RemoteWrite request, we need to send it to the sender
                 else {
@@ -175,7 +171,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             }
         }
 
-        scheduleAt(simTime() + TIMER_OFFSET, timeToSendOutRequest);
+        scheduleAt(simTime() + exponential(10.0), timeToSendOutRequest);
     }
 
 
@@ -201,12 +197,14 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         }
 
         if (!msgsWaitingForAck.empty()) {
-            scheduleAt(simTime() + TIMER_OFFSET, timeToCheckAcks);
+            scheduleAt(simTime() + exponential(10.0), timeToCheckAcks);
         }
     }
 
     // all other time constants that we received any msgs that we don't process
     else {
+        SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+        lamportClockHandle(sMsg);
         //
 //        SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
         int msgLamportClk = sMsg->getLamportClock();

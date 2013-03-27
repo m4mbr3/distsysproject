@@ -29,7 +29,7 @@ simple ReplicaNetwork
         input inClients[];			// from clients
 		input inReplicas[];			// from other replica
 		input inAnswer;				// from InvocationManager
-		input inLamportClk;
+		//input inLamportClk;
 		
 		output outAnswer[2] ;		// to RemoteWriteProtocol
 									// [0] for remoteWrite
@@ -37,6 +37,6 @@ simple ReplicaNetwork
 		output outClients[];
 		output outReplicas[];
 		output outRequest;       	// to InvocationManager
-        output outLamportNew;		// to LamportClock for setting new lamport clock value
-        output outLamportUpt;		// to Lamport Clock for update lamport clock value only
+        //output outLamportNew;		// to LamportClock for setting new lamport clock value
+        //output outLamportUpt;		// to Lamport Clock for update lamport clock value only
 }

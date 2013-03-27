@@ -37,18 +37,19 @@ void AppMsgGenerator::initialize()
     //building the first message to send
     timeToSendMessage = new cMessage("sendMsg");
     //Scheduling another sending of the message
-    scheduleAt(simTime() + 3, timeToSendMessage);
+    scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
+    //initializing our local clock
+    localClock = 0;
 
 }
 
 cMessage* AppMsgGenerator::getMessage(){
 
-    SystemMsg* sMsg = new SystemMsg();
+    SystemMsg* sMsg = new SystemMsg("ReqMsg");
     //Client D
     sMsg->setClientID(cID);
     //Data ID
-    int offset = intuniform(0, 25);
-    dataID = "a" + offset;
+    dataID = "a";
     sMsg->setDataID(dataID.c_str());
     //data
     sMsg->setData(intuniform(-1000, 1000));
@@ -58,6 +59,9 @@ cMessage* AppMsgGenerator::getMessage(){
         sMsg->setOperation(WRITE);
     else
         sMsg->setOperation(READ);
+    //timestamp
+    localClock++;
+    sMsg->setLamportClock(localClock);
     return sMsg;
 
 }
@@ -71,7 +75,7 @@ void AppMsgGenerator::handleMessage(cMessage *msg)
         //Sending the message
         send(m, "replicasOut", replicaID);
         //Scheduling another sending of the message
-        scheduleAt(simTime() + 3, timeToSendMessage);
+        scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
     }
     /*
     else{

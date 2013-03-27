@@ -19,7 +19,6 @@ import sharerds.invocation.InvocationManager;
 import sharerds.replication.*;
 import sharerds.recovery.WriteAheadLog;
 import sharerds.networks.ReplicaNetwork;
-import sharerds.synchronization.LamportClock;
 
 module Replica
 {
@@ -77,14 +76,8 @@ module Replica
                 outClients[numberClients];
                 outReplicas[numberReplicas];
         }
-        //the lamport clock, WE SHOULD SET UP THE REPLICA ID AS PARAMETER
-        lc: LamportClock {
-
-            @display("p=99,289");
-        }
     connections:
         //NW and IM
-        //THE NAME NEED TO BE CHANGE FOR outRequest
         nw.outRequest --> im.in[0];
         im.out[1] --> nw.inAnswer;
         //RWP and IM
@@ -98,16 +91,11 @@ module Replica
         wal.out --> rwp.in[2];
         //RWP and NW
         //remote write
-        //CHANGE THE NAME OF OUT REQUESTS TO ANSWERS
         rwp.out[3] --> nw.inRemoteRequests[0];
         nw.outAnswer[0] --> rwp.in[3];
         //remote update
         rwp.out[4] --> nw.inRemoteRequests[1];
         nw.outAnswer[1] --> rwp.in[4];
-        //NW and LCLOCK
-        nw.outLamportUpt --> lc.inUpt;
-        nw.outLamportNew --> lc.inNew;
-        lc.out --> nw.inLamportClk;
         //REPLICA and NW
         //inClients
         for i=0..sizeof(inClients)-1 {
