@@ -29,11 +29,13 @@ void BasicNetwork::handleMessage(cMessage *msg)
     int gateID = ttmsg->getArrivalGateId();
     if (gateID == gate("in",FROM_REPLICAGROUPMANAGER)->getId()){
         open_connections.push_back( std::pair<int,int>(ttmsg->getReplicaID(),ttmsg->getDataID()) );
-        send(ttmsg, "out"+TO_REPLICAGROUPMANAGER);
+        send(ttmsg, "out"+TO_CLIENTNETWORK);
     }
     else if ( gateID == gate ("in",FROM_CLIENTNETWORK)->getId()){
-        std::find(open_connections.begin(), open_connections.end(), std::pair<int, int>(ttmsg->getReplicaID(),ttmsg->getDataID()));
-        printf();
+        auto result = std::find(open_connections.begin(), open_connections.end(), std::pair<int, int>(ttmsg->getReplicaID(),ttmsg->getDataID()));
+        if ( result != open_connections.end()){
+            open_connections.erase(result);
+        }
+        send(ttmsg, "out"+TO_INVOCATIONMANAGER);
     }
-
 }

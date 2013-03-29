@@ -25,4 +25,16 @@ void ClientNetwork::initialize()
 void ClientNetwork::handleMessage(cMessage *msg)
 {
     // TODO - Generated method body
+    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
+    int gateID = ttmsg->getArrivalGateId();
+    if (gateID == gate("in",FROM_BASICNETWORK)->getId()){
+        //Here I look the ReplicaID of the message and i send it to
+        //ReplicaID+offset port where offset is 2
+        //the port 0 is dedicated to the lamport module
+        //the port 1 is dedicated to the basicNetwork module
+        //All the others port are dedicated to the connection
+        //with the replica
+        send(ttmsg, "out"+(ttmsg->getReplicaID()+2));
+    }
+    else if (gateID == gate("in",FROM_LAMPORT))
 }

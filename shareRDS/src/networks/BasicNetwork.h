@@ -20,8 +20,8 @@
 #include "SystemMsg_m.h"
 #define FROM_REPLICAGROUPMANAGER 0
 #define FROM_CLIENTNETWORK 1
-#define TO_REPLICAGROUPMANAGER 0
-#define TO_REPLICAGROUPMANAGER 1
+#define TO_INVOCATIONMANAGER 0
+#define TO_CLIENTNETWORK 1
 /**
  * TODO - Generated class
  */
