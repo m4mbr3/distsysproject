@@ -38,12 +38,12 @@ void ClientNetwork::handleMessage(cMessage *msg)
     }
     else if (gateID == gate("in",FROM_LAMPORT)->getId()){
        //here i send the received message
-       //TODO
+       send(ttmsg, "out"+TO_BASICNETWORK);
     }
     else{
         //here it means that ttmsg is sent from one of my connected replica
         //it could be either an answer or an ack
         //At this point i forward it directly to the basic network module
-        send(ttmsg, "out"+TO_BASICNETWORK);
+        send(ttmsg, "out"+TO_LAMPORTCLOCK);
     }
 }
