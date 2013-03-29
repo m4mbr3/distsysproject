@@ -28,7 +28,14 @@ void BasicNetwork::handleMessage(cMessage *msg)
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
     int gateID = ttmsg->getArrivalGateId();
     if (gateID == gate("in",FROM_REPLICAGROUPMANAGER)->getId()){
-        open_connections.push_back( std::pair<int,int>(ttmsg->getReplicaID(),ttmsg->getDataID()) );
+        if (ttmsg->getReplyCode() != 3){
+            open_connections.push_back( std::pair<int,int>(ttmsg->getReplicaID(),ttmsg->getDataID()) );
+        }
+        else{
+            //If the massage that is passing is a reinc message
+            //i flush the table of the connections
+            open_connections.clear();
+        }
         send(ttmsg, "out"+TO_CLIENTNETWORK);
     }
     else if ( gateID == gate ("in",FROM_CLIENTNETWORK)->getId()){

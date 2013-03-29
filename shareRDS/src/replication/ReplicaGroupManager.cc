@@ -44,7 +44,7 @@ SystemMsg* ReplicaGroupManager::generateReincarnationMessage(int replica, int cl
     SystemMsg * ttmsg = new SystemMsg();
     ttmsg->setClientID(clientID);
     ttmsg->setReplicaID(replica);
-    ttmsg->setIsClientReincarnation(true);
+    ttmsg->setReplyCode(3);
     return ttmsg;
     }
 void ReplicaGroupManager::handleMessage(cMessage *msg)

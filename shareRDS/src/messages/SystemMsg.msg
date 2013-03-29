@@ -20,6 +20,7 @@ enum OperationType{
 READ=0;
 WRITE=1;
 UPDATE=2;
+REINC=3;
 };
 //Reply code enum
 enum ReplyCodeType{
