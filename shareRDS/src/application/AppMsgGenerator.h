@@ -35,6 +35,8 @@ class AppMsgGenerator : public cSimpleModule
     int replicaID;
     //the current data id
     std::string dataID;
+    //local clock
+    int localClock;
     //build a message to be send into the network
     cMessage* getMessage();
 

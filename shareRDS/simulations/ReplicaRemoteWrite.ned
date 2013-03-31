@@ -43,6 +43,9 @@ network ReplicaRemoteWrite
         client: AppMsgGenerator {
             parameters:
                 clientID = 1;
+//        client: AppMsgGenerator{
+//        	 parameters:
+//        	    clientID=0;
                 numberReplicas = nReplicas;
 
                 @display("p=71,167");
@@ -50,10 +53,10 @@ network ReplicaRemoteWrite
     connections allowunconnected:
 
         //Connecting all the replicas to all the ones in the system
-        for k=0..r0.numberReplicas-1, if k!=0 {
+        for k=0..r0.numberReplicas-1{
             r0.outReplicas[k] --> r1.inReplicas[k];
         }
-        for k=0..r1.numberReplicas-1, if k!=1 {
+        for k=0..r1.numberReplicas-1 {
             r1.outReplicas[k] --> r0.inReplicas[k];
         }
         //connecting the client to the replicas
