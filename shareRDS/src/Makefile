@@ -43,6 +43,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 # Object files for local .cc and .msg files
 OBJS = \
     $O/application/Application.o \
+    $O/application/AppMsgGenerator.o \
     $O/concurrency/DistMutualExclusion.o \
     $O/failure/ClientReincarnation.o \
     $O/failure/FailureManager.o \
@@ -154,6 +155,9 @@ depend:
 	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+$O/application/AppMsgGenerator.o: application/AppMsgGenerator.cc \
+	application/AppMsgGenerator.h \
+	messages/SystemMsg_m.h
 $O/application/Application.o: application/Application.cc \
 	application/Application.h
 $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \

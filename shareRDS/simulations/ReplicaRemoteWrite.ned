@@ -27,25 +27,26 @@ network ReplicaRemoteWrite
     submodules:
         r0: Replica {
             parameters:
-                rID =0;
+                rID = 0;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
                 @display("p=94,87");
         }
         r1: Replica {
             parameters:
-                rID =1;
+                rID = 1;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
                 @display("p=179,157");
         }
         //put a client
-        client: AppMsgGenerator{
-        	 parameters:
-        	    clientID=1;
+        client: AppMsgGenerator {
+            parameters:
+                clientID = 1;
                 numberReplicas = nReplicas;
-        
-        };
+
+                @display("p=71,167");
+        }
     connections allowunconnected:
 
         //Connecting all the replicas to all the ones in the system
@@ -56,9 +57,9 @@ network ReplicaRemoteWrite
             r1.outReplicas[k] --> r0.inReplicas[k];
         }
         //connecting the client to the replicas
-		client.replicasOut[0] --> r0.inClients[0];
-		client.replicasOut[1] --> r1.inClients[0];
-		
-		r0.outClients[0] --> client.replicasIn[0];
-		r1.outClients[0] --> client.replicasIn[1];
+        client.replicasOut[0] --> r0.inClients[0];
+        client.replicasOut[1] --> r1.inClients[0];
+
+        r0.outClients[0] --> client.replicasIn[0];
+        r1.outClients[0] --> client.replicasIn[1];
 }
