@@ -21,11 +21,9 @@
 #define FROM_WRITEAHEADPROTOCOL 0
 #define FROM_CLIENTREINCARNATION 1
 #define FROM_INVOCATIONMANAGER 2
-#define FROM_REPLICAGROUPMANAGER 3
 #define TO_WRITEAHEADPROTOCOL 0
 #define TO_CLIENTREAINCARNATION 1
 #define TO_NETWORK 2
-#define TO_REPLICAGROUPMANAGER 3
 /**
  * The simple module that is in charge of managing the replicas in the
  * System.
@@ -37,6 +35,7 @@
 class ReplicaGroupManager : public cSimpleModule
 {
     public:
+        int reincCounter;
         bool dead;
         int clientID;
         std::vector<int> ReplicaIDs;
@@ -46,7 +45,6 @@ class ReplicaGroupManager : public cSimpleModule
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);
-
 };
 
 #endif

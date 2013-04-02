@@ -25,6 +25,8 @@ void ReplicaGroupManager::initialize()
     replicaID = par("replicaID");
     //Validating that a replica ID was defined
     clientID = par("clientID");
+    //Reincarnation counter set to 0
+    reincCounter = 0;
     if(replicaID == -1)
         throw cRuntimeError("Invalid replica ID %d; must be >= 0", replicaID);
 
@@ -56,7 +58,19 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
 
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
     int gateID = ttmsg->getArrivalGateId();
-    if (gateID == gate("in", FROM_WRITEAHEADPROTOCOL)->getId()){
+
+    if ( ttmsg->isSelfMessage()){
+        //In this piece of code i send one reincarnation message and then i schedule the next one
+        if(reincCounter < ReplicaGroupManager::ReplicaIDs.length()){
+            send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(reincCounter), this.clientID),"out"+TO_NETWORK);// i send messages to all my connected replica.
+            reincCounter++;
+            scheduleAt("0.0", ttmsg);
+        }
+        else{
+            delete ttmsg;
+        }
+    }
+    else if (gateID == gate("in", FROM_WRITEAHEADPROTOCOL)->getId()){
         if (!dead){
             //here i forward the message directly to the
             //the basic network
@@ -70,11 +84,15 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         if(ttmsg->getReplyCode() == 1){
             // In this if branch I send a broadcast to all my connected replica
             // to say i'm alive
-            int i;
-            for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
-                send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(i), this.clientID),"out"+TO_NETWORK);// i send messages to all my connected replica.
-            }
-            EV << "REPLICAGROUPMANAGER sended alive messages to every replica " << endl;
+            // here i send the first reincarnation message and then I schedule the next if it exist
+            reincCounter = 0;
+
+            //for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
+            send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(reincCounter), this.clientID),"out"+TO_NETWORK);// i send messages to all my connected replica.
+            reincCounter++;
+            SystemMsg* nextReincMSG = new SystemMsg();
+            scheduleAt("0.0", nextReincMSG);
+            //}
             dead = false;
         }
         else{
@@ -91,14 +109,6 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             int res_oracle = intuniform(0, ReplicaGroupManager::ReplicaIDs.length());
             ttmsg->setReplicaID(ReplicaGroupManager::ReplicaIDs.at(res_oracle));
             send(ttmsg,"out"+ TO_WRITEAHEADPROTOCOL);
-        }
-        else{
-            delete ttmsg;
-        }
-    }
-    else if (gateID == gate("in", FROM_REPLICAGROUPMANAGER)->getId()){
-        if (!dead){
-            //I don't know if it is useful
         }
         else{
             delete ttmsg;
