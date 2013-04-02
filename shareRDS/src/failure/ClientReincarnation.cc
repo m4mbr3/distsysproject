@@ -1,9 +1,6 @@
-//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,42 +11,38 @@
 //
 
 #include "ClientReincarnation.h"
-#include "SystemMsg_m.h"
-#include <string>
+
 
 Define_Module(ClientReincarnation);
 
-//ClientReincarnation::ClientReincarnation(String clientID)
-//{
-//    this.clientID = clientID;
-//    fm = new FailureManager();
-//
-//}
-//int ClientReincarnation::getClientID()
-//{
-////    return this.clientID;
-//}
-//void ClientReincarnation::setClientID(String clientID)
-//{
-////    this.clientID = clientID;
-//}
 void ClientReincarnation::initialize()
 {
-   // TODO - Generated method body
-//    myOwnData->
+    clientID = par("clientID");
+    reinc = new SystemMsg();
+    reinc->setReplyCode(0)
+    scheduleAt("500",reinc);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
-    //TODO - Generated method body
-//    SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg)
-//    if(ttmsg->clientID == this.clientID)
-//    {
-//        //I manage the message..if and only if i'm not failed
-//        if(!fm->isFailed())
-//            std::cout << "I received this message" << ttmsg.getData() << "from" << ttmsg.getReplicatID() << std::endl;
-//
-//    }
-
-
+    SystemMsg *reinc = check_and_cast<SystemMsg*> (msg);
+    if (reinc->isSelfMessage() ){
+        SystemMsg* msg = new SystemMsg();
+        if(reinc->getReplyCode()){
+            //set i'm dead message to replica group manager
+            //prepare i'm alive message for myself
+            reinc->setReplyCode(0);
+            msg->setReplyCode(1);
+        }
+        else{
+            reinc->setReplyCode(1);
+            msg->setReplyCode(0);
+        }
+        //here i phisically send the i'm alive or i'm dead
+        //message to the replica group manager
+        //and i schedule the reincarnation message
+        //to myself
+        send(msg,"out");
+        scheduleAt(intuniform(0,500),reinc);
+    }
 }

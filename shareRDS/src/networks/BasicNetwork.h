@@ -13,32 +13,26 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-//
-// Operation type
-//
-enum OperationType{
-READ=0;
-WRITE=1;
-COMMIT=2;
-ROLLBACK=3;
-UPDATE = 4;
-ACK = 5;
-DELETE = 6;
-REINC=7;
+#ifndef __SHARERDS_BASICNETWORK_H_
+#define __SHARERDS_BASICNETWORK_H_
+
+#include <omnetpp.h>
+#include "SystemMsg_m.h"
+#define FROM_REPLICAGROUPMANAGER 0
+#define FROM_CLIENTNETWORK 1
+#define TO_INVOCATIONMANAGER 0
+#define TO_CLIENTNETWORK 1
+#define TO_LAMPORTCLOCK 2
+#define FROM_LAMPORTCLOCK 2
+
+
+class BasicNetwork : public cSimpleModule {
+  public:
+    std::vector<int,int> open_connections;
+    std::vector<int>ReplicaIDs;
+  protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
 };
-//Reply code enum
-enum ReplyCodeType{
-FAIL=0;
-SUCCESS=1;
-};
-//Message
-message SystemMsg {
-    int clientID =-1;		// ID of the client that make the request
-    int replicaID=-1;		// ID of the sender
-    int replicaOwnerID = -1;	// ID of the owner of dataID
-    int lamportClock=-1;
-    int replyCode=-1 @enum(ReplyCodeType);
-    int operation=-1 @enum(OperationType);
-    string dataID;
-    int data;
-};
+
+#endif
