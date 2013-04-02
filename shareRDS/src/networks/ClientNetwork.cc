@@ -19,12 +19,10 @@ Define_Module(ClientNetwork);
 
 void ClientNetwork::initialize()
 {
-    // TODO - Generated method body
 }
 
 void ClientNetwork::handleMessage(cMessage *msg)
 {
-    // TODO - Generated method body
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
     int gateID = ttmsg->getArrivalGateId();
     if (gateID == gate("in",FROM_BASICNETWORK)->getId()){

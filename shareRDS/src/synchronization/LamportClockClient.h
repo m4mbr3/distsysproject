@@ -13,26 +13,25 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#ifndef __SHARERDS_BASICNETWORK_H_
-#define __SHARERDS_BASICNETWORK_H_
+#ifndef __SHARERDS_LAMPORTCLOCKCLIENT_H_
+#define __SHARERDS_LAMPORTCLOCKCLIENT_H_
 
 #include <omnetpp.h>
-#include "SystemMsg_m.h"
-#define FROM_REPLICAGROUPMANAGER 0
-#define FROM_CLIENTNETWORK 1
-#define TO_INVOCATIONMANAGER 0
-#define TO_CLIENTNETWORK 1
-#define TO_LAMPORTCLOCK 2
-#define FROM_LAMPORTCLOCK 2
+#define FROM_CLIENTNETWORK 0
+#define TO_CLIENTNETWORK 0
+#define FROM_BASICNETWORK 1
+#define TO_BASICNETWORK 1
+/**
+ * TODO - Generated class
+ */
+class LamportClockClient : public cSimpleModule
+{
+    private:
+    int localClock;
 
-
-class BasicNetwork : public cSimpleModule {
-  public:
-    std::vector<int,int> open_connections;
-    std::vector<int>ReplicaIDs;
-  protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
 };
 
 #endif

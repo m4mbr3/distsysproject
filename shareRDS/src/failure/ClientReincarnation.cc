@@ -17,27 +17,16 @@ Define_Module(ClientReincarnation);
 
 void ClientReincarnation::initialize()
 {
-    // TODO - Generated method body
     clientID = par("clientID");
-    ttmsg = new SystemMsg();
-    scheduleAt("0.0",ttmsg);
     reinc = new SystemMsg();
+    reinc->setReplyCode(0)
+    scheduleAt("500",reinc);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
-    //TODO - Generated method body
-    SystemMsg *tmsg = check_and_cast<SystemMsg*> (msg);
-    if (tmsg == ttmsg){
-        //I sent a message to myself
-        SystemMsg* msg = new SystemMsg();
-        //I created a new message with only the isClientReincarnation variable
-        //setted to say i'm alive again.
-        send(msg, "out");
-        scheduleAt(intuniform(0,500),reinc);
-        delete tmsg;
-    }
-    else if (tmsg == reinc){
+    SystemMsg *reinc = check_and_cast<SystemMsg*> (msg);
+    if (reinc->isSelfMessage() ){
         SystemMsg* msg = new SystemMsg();
         if(reinc->getReplyCode()){
             //set i'm dead message to replica group manager
@@ -54,6 +43,6 @@ void ClientReincarnation::handleMessage(cMessage *msg)
         //and i schedule the reincarnation message
         //to myself
         send(msg,"out");
-        scheduleAt(intuniform(0,500),tmsg);
+        scheduleAt(intuniform(0,500),reinc);
     }
 }

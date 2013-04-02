@@ -10,7 +10,6 @@ class ClientReincarnation : public cSimpleModule
     public:
         //First Message at initialize time to notify all
         //that i'm alive
-        SystemMsg* ttmsg;
         int clientID;
         //Message to decide when die or live
         SystemMsg *reinc;
