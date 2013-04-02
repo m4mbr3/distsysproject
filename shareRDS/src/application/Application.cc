@@ -1,11 +1,9 @@
 #include "Application.h"
-#include "SystemMsg_m.h"
 
 Define_Module(Application);
 void Application::initialize()
 {
     setClientID(par("clientID"));
-    setMaxNReplica(par("maxNReplica"));
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
     ttmsg = new SystemMsg();
@@ -15,9 +13,9 @@ void Application::initialize()
 void Application::handleMessage(cMessage *msg)
 {
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
-    if (this->ttmsg == ttmsg){
+    if (ttmsg->isSelfMessage()){
         // I received a message from myself
-        scheduleAt(4.0, ttmsg);
+        scheduleAt(intuniform(4,20), ttmsg);
         SystemMsg *msgGen = Application::generateMessage();
         send (msgGen, "out");
     }
@@ -31,9 +29,6 @@ void Application::handleMessage(cMessage *msg)
         else if ((operation == READ) && (isSuccess)){
             //Here I have to add to my local copy the value read from the replica and saved
             //item
-         /*   if (ownedDataItems.at(ttmsg->getDataID())== std::result_out_of_range){
-                ownedDataItems[ttmsg->getDataID()] = ttmsg->getData();
-            }*/
             ownedDataItems[ttmsg->getDataID()]=ttmsg->getData();
         }
         else if ((operation == WRITE)&&(!isSuccess)){
@@ -45,7 +40,6 @@ void Application::handleMessage(cMessage *msg)
         delete ttmsg;
     }
 }
-void forwardMessage(SystemMsg * ttmsg){}
 SystemMsg* Application::generateMessage(){
     //This is the function that generates random messages to replica
 
@@ -56,12 +50,6 @@ SystemMsg* Application::generateMessage(){
     ttmsg->setDataID(((intuniform(0,100)%2)==0) ?(const char *) 'a' + rand() % (('z'-'a') + 1): (const char *)'A' + rand() % (('Z'-'A') + 1));
 
     return ttmsg;
-}
-int Application::getMaxNReplica(){
-    return maxNReplica;
-}
-void Application::setMaxNReplica(int numberOfReplica){
-    maxNReplica = numberOfReplica;
 }
 int Application::getClientID()
 {
