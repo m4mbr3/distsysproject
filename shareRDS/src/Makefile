@@ -42,21 +42,24 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc and .msg files
 OBJS = \
+    $O/application/AppMsgGenerator.o \
     $O/application/Application.o \
     $O/concurrency/DistMutualExclusion.o \
     $O/failure/ClientReincarnation.o \
-    $O/failure/FailureManager.o \
     $O/invocation/InvocationManager.o \
-    $O/multicast/AtomicMulticast.o \
     $O/multicast/BasicMulticast.o \
+    $O/multicast/AtomicMulticast.o \
+    $O/networks/ClientNetwork.o \
+    $O/networks/BasicNetwork.o \
     $O/networks/ReplicaNetwork.o \
-    $O/recovery/LogManager.o \
     $O/recovery/WriteAheadLog.o \
-    $O/replication/DataItemsManager.o \
+    $O/recovery/LogManager.o \
     $O/replication/RemoteWriteProtocol.o \
     $O/replication/ReplicaGroupManager.o \
-    $O/synchronization/BarkleySynch.o \
+    $O/replication/DataItemsManager.o \
     $O/synchronization/LamportClock.o \
+    $O/synchronization/BarkleySynch.o \
+    $O/synchronization/LamportClockClient.o \
     $O/test/Txc.o \
     $O/messages/CSynchMsg_m.o \
     $O/messages/SystemMsg_m.o
@@ -154,17 +157,17 @@ depend:
 	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
+$O/application/AppMsgGenerator.o: application/AppMsgGenerator.cc \
+	application/AppMsgGenerator.h \
+	messages/SystemMsg_m.h
 $O/application/Application.o: application/Application.cc \
-	application/Application.h 
+	application/Application.h \
+	messages/SystemMsg_m.h
 $O/concurrency/DistMutualExclusion.o: concurrency/DistMutualExclusion.cc \
 	concurrency/DistMutualExclusion.h
 $O/failure/ClientReincarnation.o: failure/ClientReincarnation.cc \
 	failure/ClientReincarnation.h \
-	failure/FailureManager.h \
-	messages/SystemMsg_m.h \
-	replication/DataItemsManager.h
-$O/failure/FailureManager.o: failure/FailureManager.cc \
-	failure/FailureManager.h
+	messages/SystemMsg_m.h
 $O/invocation/InvocationManager.o: invocation/InvocationManager.cc \
 	invocation/InvocationManager.h \
 	messages/SystemMsg_m.h
@@ -176,6 +179,12 @@ $O/multicast/AtomicMulticast.o: multicast/AtomicMulticast.cc \
 	multicast/AtomicMulticast.h
 $O/multicast/BasicMulticast.o: multicast/BasicMulticast.cc \
 	multicast/BasicMulticast.h
+$O/networks/BasicNetwork.o: networks/BasicNetwork.cc \
+	messages/SystemMsg_m.h \
+	networks/BasicNetwork.h
+$O/networks/ClientNetwork.o: networks/ClientNetwork.cc \
+	messages/SystemMsg_m.h \
+	networks/ClientNetwork.h
 $O/networks/ReplicaNetwork.o: networks/ReplicaNetwork.cc \
 	messages/SystemMsg_m.h \
 	networks/ReplicaNetwork.h
@@ -198,8 +207,9 @@ $O/synchronization/BarkleySynch.o: synchronization/BarkleySynch.cc \
 $O/synchronization/LamportClock.o: synchronization/LamportClock.cc \
 	messages/SystemMsg_m.h \
 	synchronization/LamportClock.h
+$O/synchronization/LamportClockClient.o: synchronization/LamportClockClient.cc \
+	messages/SystemMsg_m.h \
+	synchronization/LamportClockClient.h
 $O/test/Txc.o: test/Txc.cc \
 	test/Txc.h
 
-$O/messages/SystemMsg_m.o: messages/SystemMsg_m.cc \
-	messages/SystemMsg_m.h

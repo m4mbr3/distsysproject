@@ -17,6 +17,7 @@
 #define __SHARERDS_BASICNETWORK_H_
 
 #include <omnetpp.h>
+#include <cstdlib>
 #include "SystemMsg_m.h"
 #define FROM_REPLICAGROUPMANAGER 0
 #define FROM_CLIENTNETWORK 1
@@ -28,7 +29,7 @@
 
 class BasicNetwork : public cSimpleModule {
   public:
-    std::vector<int,int> open_connections;
+    std::map <int,std::vector<int> > open_connections;
     std::vector<int>ReplicaIDs;
   protected:
     virtual void initialize();

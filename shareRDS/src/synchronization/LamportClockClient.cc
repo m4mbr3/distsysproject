@@ -31,7 +31,7 @@ void LamportClockClient::handleMessage(cMessage *msg)
 {
     //Retrieving the msg just received
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-    int gateID = ttmsg->getArrivalGateId();
+    int gateID = sMsg->getArrivalGateId();
     //The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
     EV<< "LAMPORT_SYNCH: Received message: " << sMsg->getName();
     //Retrieving the current timestamp of the message
@@ -51,9 +51,9 @@ void LamportClockClient::handleMessage(cMessage *msg)
     //Sending the msg
     EV<< "LAMPORT_SYNCH: The msg  new timestamp" << localClock;
     if (gateID == gate("in",FROM_BASICNETWORK)->getId()){
-        send(sMsg, "out"+TO_BASICNETWORK);
+        send(sMsg, "out",TO_BASICNETWORK);
     }
-    else if(gateID == gate("in", FROM_CLIENTNETWORK)){
-        send(sMsg, "out"+TO_CLIENTNETWORK);
+    else if(gateID == gate("in", FROM_CLIENTNETWORK)->getId()){
+        send(sMsg, "out",TO_CLIENTNETWORK);
     }
 }

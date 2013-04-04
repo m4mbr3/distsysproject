@@ -19,8 +19,8 @@ void ClientReincarnation::initialize()
 {
     clientID = par("clientID");
     reinc = new SystemMsg();
-    reinc->setReplyCode(0)
-    scheduleAt("500",reinc);
+    reinc->setReplyCode(0);
+    scheduleAt(simTime()+ 500.0,reinc);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)

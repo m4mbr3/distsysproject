@@ -35,11 +35,12 @@
 class ReplicaGroupManager : public cSimpleModule
 {
     public:
+        int replicaID;
         int reincCounter;
         bool dead;
         int clientID;
         std::vector<int> ReplicaIDs;
-        SystemMsg* generateReincarnationMessage(int replica);
+        SystemMsg* generateReincarnationMessage(int replica, int clientID);
         int getClientID();
         void setClientID(int clientID);
     protected:

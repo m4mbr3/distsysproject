@@ -17,7 +17,7 @@
 
 Define_Module(BasicNetwork);
 
-void BasicNetwork:initialize()
+void BasicNetwork::initialize()
 {
     // TODO - Generated method body
 }
@@ -29,7 +29,10 @@ void BasicNetwork::handleMessage(cMessage *msg)
     int gateID = ttmsg->getArrivalGateId();
     if (gateID == gate("in",FROM_REPLICAGROUPMANAGER)->getId()){
         if (ttmsg->getReplyCode() != 3){
-            open_connections.push_back( std::pair<int,int>(ttmsg->getReplicaID(),ttmsg->getDataID()) );
+            //open_connections.push_back( std::pair<int,int>(ttmsg->getReplicaID(),ttmsg->getDataID()) );
+            std::vector<int> t;
+            open_connections[ttmsg->getReplicaID()]=t;
+
         }
         else{
             //If the massage that is passing is a reinc message
@@ -39,11 +42,13 @@ void BasicNetwork::handleMessage(cMessage *msg)
         send(ttmsg, "out"+TO_LAMPORTCLOCK);
     }
     else if ( gateID == gate ("in",FROM_CLIENTNETWORK)->getId()){
+       /*
         auto result = std::find(open_connections.begin(), open_connections.end(), std::pair<int, int>(ttmsg->getReplicaID(),ttmsg->getDataID()));
         if ( result != open_connections.end()){
             open_connections.erase(result);
         }
         send(ttmsg, "out"+TO_INVOCATIONMANAGER);
+        */
     }
     else if ( gateID == gate("in",FROM_LAMPORTCLOCK)->getId()){
         send(ttmsg, "out"+TO_CLIENTNETWORK);
