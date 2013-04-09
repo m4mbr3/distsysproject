@@ -3,10 +3,10 @@ package sharerds.compmodules;
 import sharerds.application.Application;
 import sharerds.invocation.InvocationManager;
 import sharerds.replication.ReplicaGroupManager;
-import sharerds.recovery.WriteAheadProtocol;
 import sharerds.failure.ClientReincarnation;
 import sharerds.networks.ClientNetwork;
 import sharerds.networks.BasicNetwork;
+import sharerds.recovery.WriteAheadLog;
 
 
 module Client
@@ -32,7 +32,7 @@ module Client
             parameters:
 
         }
-        whp: WriteAheadProtocol{
+        whp: WriteAheadLog{
             parameters:
 
         }
@@ -56,7 +56,7 @@ module Client
         whp.out --> rgm.in[0];
         rgm.out[1] --> cr.in;
         cr.out --> rgm.in[1];
-        rgm.out[2] -->
+        //rgm.out[2] -->
 
         //TODO
 }
