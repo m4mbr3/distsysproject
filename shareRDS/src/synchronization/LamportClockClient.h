@@ -13,13 +13,25 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package sharerds.application;
+#ifndef __SHARERDS_LAMPORTCLOCKCLIENT_H_
+#define __SHARERDS_LAMPORTCLOCKCLIENT_H_
 
-simple Application
+#include <omnetpp.h>
+#define FROM_CLIENTNETWORK 0
+#define TO_CLIENTNETWORK 0
+#define FROM_BASICNETWORK 1
+#define TO_BASICNETWORK 1
+/**
+ * TODO - Generated class
+ */
+class LamportClockClient : public cSimpleModule
 {
-    parameters:
-        int clientID = default(-1);
-    gates:
-        input in;
-        output out;
-}
+    private:
+    int localClock;
+
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
+};
+
+#endif

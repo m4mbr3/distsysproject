@@ -13,24 +13,13 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#ifndef __SHARERDS_FAILUREMANAGER_H_
-#define __SHARERDS_FAILUREMANAGER_H_
+package sharerds.networks;
 
-#include <omnetpp.h>
-//#include <thread.h>
-#include <ctime>
-class FailureManager : public cSimpleModule
+simple BasicNetwork
 {
-   time_t now;
-   bool fail;
-   int seed;
-   public:
-       bool isFailed();
-   protected:
-      virtual void initialize();
-      virtual void handleMessage(cMessage *msg);
-
-
-};
-
-#endif
+    parameters:
+        int clientID = default(-1);
+    gates:
+        input in[3];
+        output out[3];
+}
