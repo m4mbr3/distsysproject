@@ -18,6 +18,17 @@
 
 Define_Module(RemoteWriteProtocol);
 
+RemoteWriteProtocol::RemoteWriteProtocol()
+{
+    replicaID =-1;
+    ownDataItem = false;
+}
+
+RemoteWriteProtocol::~RemoteWriteProtocol()
+{
+    dataItemsOwners.clear();
+}
+
 void RemoteWriteProtocol::initialize()
 {
     //Initialize the replica ID of the replica that has the group manager module
@@ -123,19 +134,12 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
          {
              //We write locally
              send(msg, "out", DIM_OUT_GATE);
-             /*
-             //We log the write locally
-             sMsg->setOperation(UPDATE);
-             send(msg, "out", WAP_OUT_GATE);
-             */
          }
          //The remote write failed because something bad happen during the communication
          else if (msgReplyCode== FAIL)
          {
              //We send the failure message to the client using the invocation manager
              send(sMsg, "out", IM_OUT_GATE);
-             //throw cRuntimeError("REPLICA_WRITE_PROTOCOL: (3) A strange error happens when logging a write request in the replica %d", replicaID);
-
          }
      }
     //We receive an update message answer from the whole replicas, this is validated by the
@@ -199,11 +203,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                     ownDataItem = false;
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
                     send(msg, "out", DIM_OUT_GATE);
-                    /*
-                    // we log the write in the case the update is cancel for some reason
-                    sMsg->setOperation(UPDATE);
-                    send(msg, "out", WAP_OUT_GATE);
-                    */
                 }
                 //if it exists, and the message do not have a replica ID, then the request comes from a client
                 //and the current replica is not the owner (is another replica) then we send a remote write

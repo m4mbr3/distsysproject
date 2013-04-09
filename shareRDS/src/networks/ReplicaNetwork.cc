@@ -24,6 +24,27 @@
 
 Define_Module(ReplicaNetwork);
 
+ReplicaNetwork::ReplicaNetwork()
+{
+    myReplicaID = -1;
+    timeToSendOutRequest = NULL;
+    timeToSendOutRequest = NULL;
+    timeToCheckAcks = NULL;
+    lamportClock = 0;
+    lcLastMsgSent = lamportClock;
+}
+
+ReplicaNetwork::~ReplicaNetwork()
+{
+    //Cleaning up the maps
+
+
+    //Cancelling and deleting the timers
+    cancelAndDelete(timeToSendOutRequest);
+    cancelAndDelete(timeToProcessRequest);
+    cancelAndDelete(timeToCheckAcks);
+}
+
 void ReplicaNetwork::initialize()
 {
     // Initialize the replica ID of the replica that has the group manager module

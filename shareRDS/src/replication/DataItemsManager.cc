@@ -21,6 +21,15 @@
 
 Define_Module(DataItemsManager);
 
+DataItemsManager::DataItemsManager()
+{
+    replicaID=-1;
+}
+
+DataItemsManager::~DataItemsManager(){
+    dataItems.clear();
+}
+
 void DataItemsManager::initialize()
 {
     //The replica ID where this manager belongs to

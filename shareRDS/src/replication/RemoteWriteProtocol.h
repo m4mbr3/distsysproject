@@ -65,6 +65,11 @@ class RemoteWriteProtocol : public cSimpleModule
     bool ownDataItem;
     //The map contains the information related to ownership of a data item in the replicas system
     std::map<std::string,int> dataItemsOwners;
+
+    public:
+    RemoteWriteProtocol();
+    ~RemoteWriteProtocol();
+
     protected:
         virtual void initialize();
         virtual void handleMessage(cMessage *msg);

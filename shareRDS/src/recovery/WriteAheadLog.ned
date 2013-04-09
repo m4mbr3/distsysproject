@@ -23,6 +23,6 @@ simple WriteAheadLog
     parameters:
         int replicaID= default(-1);
     gates:
-        input in; // receiving requests  (write/rollback) from the Replica write protocol for saving a write to a data item
+        input in; // receiving requests  (update/commit/rollback) from the Replica write protocol for saving a write to a data item
         output out; //sending the answer to the requests coming from the Replica write protocol.
 }

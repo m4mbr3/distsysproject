@@ -18,6 +18,15 @@
 
 Define_Module(WriteAheadLog);
 
+WriteAheadLog::WriteAheadLog(){
+    replicaID = -1;
+}
+
+WriteAheadLog::~WriteAheadLog(){
+    dataItemsLog.clear();
+    dataItemsState.clear();
+}
+
 void WriteAheadLog::initialize()
 {
     //Initialize the replica ID of the replica that has the group manager module
