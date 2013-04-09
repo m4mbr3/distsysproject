@@ -34,8 +34,16 @@
 // outRemoteUpdate
 #define RU_OUT_GATE 1
 
-// offset for timer to count for sending out request
-#define TIMER_OFFSET 1
+// offsets for timers
+#define PROCESSING_TIMER_OFFSET 5.0
+#define SENDING_TIMER_OFFSET 15.0
+#define CHECKING_TIMER_OFFSET 15.0
+
+
+
+//The default values
+#define NO_REPLY_CODE -1
+
 
 class ReplicaNetwork : public cSimpleModule
 {
