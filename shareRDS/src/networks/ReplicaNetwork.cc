@@ -62,14 +62,16 @@ void ReplicaNetwork::initialize()
 
     // schedule to send msg to request to process queuing msg
     // send this to InvocationManager
-    scheduleAt(simTime() + exponential(2.0), timeToProcessRequest);
+    pTimerOffset = par("processingTimerOffset").doubleValue();
+    scheduleAt(simTime() + exponential(pTimerOffset), timeToProcessRequest);
 
+    sTimerOffset = par("sendingTimerOffset").doubleValue();
     timeToSendOutRequest = new cMessage("sendRequestTimer");
     // schedule to process outQueue
-    scheduleAt(simTime() + exponential(3.0), timeToSendOutRequest);
+    scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
 
+    caTimerOffset =  par("checkAckTimerOfset").doubleValue();
     timeToCheckAcks = new cMessage("checkAcksTimer");
-    scheduleAt(simTime() + exponential(4.0), timeToCheckAcks);
 }
 
 void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
@@ -123,7 +125,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We update the timestamp of the last message processed
                 lcLastMsgSent = sMsg->getLamportClock();
                 ///We delete the reference to the message
-                inQueue.erase(inQueue.begin()+i);
+                //inQueue.erase(inQueue.begin()+i);
                 //We delete the message
                 delete sMsg;
 
@@ -134,13 +136,17 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We update the timestamp of the last message processed
                 lcLastMsgSent = sMsg->getLamportClock();
                 ///We delete the reference to the message
-                inQueue.erase(inQueue.begin()+i);
+                //inQueue.erase(inQueue.begin()+i);
                 //We delete the message
                 delete sMsg;
             }
+            //TODO we need to validate if it is a message from myself in the case of multicast!!
+
         }
+        //We clear the in queue
+        inQueue.clear();
         //we schedule again the processing timer
-        scheduleAt(simTime() + exponential(PROCESSING_TIMER_OFFSET),timeToProcessRequest);
+        scheduleAt(simTime() + exponential(pTimerOffset),timeToProcessRequest);
     }
     //Time to start processing the requests that are in the outqueue
     else if (msg == timeToSendOutRequest) {
@@ -180,7 +186,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                      * Multicast
                      */
                     //We multicast the messages, including ourselves
-                    for (int i = 0; gateSize("outReplicas"); i++) {
+                    for (int i = 0; i< noOfReplicas; i++) {
                         //We send a duplicate of the current message
                         SystemMsg* outgoingMsg = sMsg->dup();
                         //We set up the reply code as -1, because we are waiting for an answer from a remote replica
@@ -188,7 +194,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                         send(outgoingMsg, "outReplicas",i);
                     }
                     //We schedule the timer for checking the state of the acks
-                    scheduleAt(simTime() + exponential(CHECKING_TIMER_OFFSET), timeToCheckAcks);
+                    scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
                 }
             }
             //We need to send a request for a write request to the owner of the data item (a remote replica)
@@ -213,14 +219,15 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
            else {
                send(sMsg->dup(), "outClients", msgClientID);
            }
-
             ///We delete the reference to the message
-            outQueue.erase(outQueue.begin()+i);
+            //outQueue.erase(outQueue.begin()+i);
             //We delete the message
             delete sMsg;
         }
+        //We erase the outqueue
+        outQueue.clear();
         //Rescheduling the time to process the outqueue
-         scheduleAt(simTime() + exponential(SENDING_TIMER_OFFSET), timeToSendOutRequest);
+         scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
     }
     //Checking the acks of a message
     else if (msg == timeToCheckAcks) {
@@ -263,7 +270,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         }
         //While there are messages waiting for acks, we need to keep having a timer for checking the acks of that mesasge
         if (!msgsWaitingForAck.empty()) {
-            scheduleAt(simTime() + exponential(CHECKING_TIMER_OFFSET), timeToCheckAcks);
+            scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
         }
     }
     // all other time constants that we received any msgs that we don't process
@@ -273,30 +280,31 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         lamportClockHandle(sMsg);
         int msgLamportClk = sMsg->getLamportClock();
         int msgGateID = sMsg->getArrivalGateId();
-        // incoming msg has lamport clock ealier than already sent-out-msgs for processing inside
-        if (msgLamportClk < lcLastMsgSent) {
-            sMsg->setReplyCode(FAIL);
-            // this is fail, so put it in the outQueue
+
+        //Messages outgoing from the replica
+        if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
+                msgGateID == findGate("inRemoteRequests", RU_IN_GATE) ||
+                msgGateID == findGate("inAnswer")) {
+            //We set up the the timestamp of the outgoing message
             sMsg->setLamportClock(lamportClock);
             //We save a duplication of the message such that we have the memory control in the current replica
             outQueue.push_back(sMsg->dup());
         }
-        //incoming msg has lamport clock later than lcLastMsgSent
+        //Messages incoming to the replica
         else {
-            //Messages outgoing from the replica
-            if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
-                    msgGateID == findGate("inRemoteRequests", RU_IN_GATE) ||
-                    msgGateID == findGate("inAnswer")) {
-                //We set up the the timestamp of the outgoing message
-                sMsg->setLamportClock(lamportClock);
-                //We save a duplication of the message such that we have the memory control in the current replica
-                outQueue.push_back(sMsg->dup());
-            }
-            //Messages incoming to the replica
-            else {
+            // incoming msg has lamport clock ealier than already sent-out-msgs for processing inside
+           if (msgLamportClk < lcLastMsgSent) {
+               sMsg->setReplyCode(FAIL);
+               // this is fail, so put it in the outQueue
+               sMsg->setLamportClock(lamportClock);
+               //We save a duplication of the message such that we have the memory control in the current replica
+               outQueue.push_back(sMsg->dup());
+           }
+           //incoming msg has lamport clock later than lcLastMsgSent
+           else{
                 inQueue.push_back(sMsg->dup());
                 orderInQueue();
-            }
+           }
         }
     }
 }

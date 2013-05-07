@@ -37,13 +37,19 @@ network ReplicaTest
         client: AppMsgGenerator {
             parameters:
                 clientID = 0;
+                replicaId = 0;
+                operationOrder ="w w w r r r";
+                dataItemsID = "a b c a b c";
                 numberReplicas = nReplicas;
-
                 @display("p=39,142");
         }
     connections allowunconnected:
         //connecting the client to the replicas
         client.replicasOut[0] --> r0.inClients[0];
         r0.outClients[0] --> client.replicasIn[0];
+        //IMPORTANT
+        //Connecting the outs to other replicas 
+        //As R0 is the only one replica we must connect the R0.outReplica[0] to its own inReplica[0]
+        r0.outReplicas[0] --> r0.inReplicas[0];
 
 }

@@ -223,6 +223,8 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                if(msgReplicaID== NO_REPLICA){
                    //Then it is a new data item in the whole system and the owner is the current replica
                    ownDataItem = true;
+                   //We relate the replica owner ID with the data item id
+                    dataItemsOwners[msgDataID] =replicaID;
                    //We update the owner field of the message
                    sMsg->setReplicaOwnerID(replicaID);
                }
@@ -242,11 +244,12 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                send(msg,"out", WAP_OUT_GATE);
             }
          }
+         //if the request is a read, we read the current value locally the data items manager should check the
+         //time stamp of the read.
+          else if(msgOperationID == READ)
+          {
+              send(msg, "out", DIM_OUT_GATE);
+          }
      }
-    //if the request is a read, we read the current value locally the data items manager should check the
-    //time stamp of the read.
-     else if(msgOperationID == READ)
-     {
-         send(msg, "out", DIM_OUT_GATE);
-     }
+
 }

@@ -75,6 +75,10 @@ class ReplicaNetwork : public cSimpleModule
         cMessage *timeToSendOutRequest;
         //A self msg to trigger checking out ack msgs overtime
         cMessage *timeToCheckAcks;
+        //TIMERS OFFSETS
+        double pTimerOffset;
+        double sTimerOffset;
+        double caTimerOffset;
         //Update the local lamport clock of the replica
         void lamportClockHandle(SystemMsg *msg);
         //Order the replica messages in the inQueue
