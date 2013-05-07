@@ -41,7 +41,6 @@ void ReplicaNetwork::initialize()
 
     // schedule to send msg to request to process queuing msg
     // send this to InvocationManager
-<<<<<<< HEAD
     scheduleAt(simTime() + 1, timeToProcessRequest);
 
     timeToSendOutRequest = new cMessage("sendOutRequest");
@@ -50,16 +49,7 @@ void ReplicaNetwork::initialize()
 
     timeToCheckAcks = new cMessage("checkAcks");
     scheduleAt(simTime() + 3, timeToCheckAcks);
-=======
-    scheduleAt(simTime() + exponential(2.0), timeToProcessRequest);
 
-    timeToSendOutRequest = new cMessage("sendOutRequest");
-    // schedule to process outQueue
-    scheduleAt(simTime() + exponential(3.0), timeToSendOutRequest);
-
-    timeToCheckAcks = new cMessage("checkAcks");
-    scheduleAt(simTime() + exponential(4.0), timeToCheckAcks);
->>>>>>> b29bdea3f846a3daed214966b018c8ab1d84e8d2
 }
 
 void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
@@ -77,11 +67,7 @@ void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
 
 void ReplicaNetwork::handleMessage(cMessage *msg)
 {
-<<<<<<< HEAD
 
-
-=======
->>>>>>> b29bdea3f846a3daed214966b018c8ab1d84e8d2
     // DONE inQueue-----------------------------------------------------
     if (msg == timeToProcessRequest) {
         int size = inQueue.size();

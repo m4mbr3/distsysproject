@@ -45,11 +45,8 @@ void AppMsgGenerator::initialize()
 
 cMessage* AppMsgGenerator::getMessage(){
 
-<<<<<<< HEAD
     SystemMsg* sMsg = new SystemMsg("msgFromAppMsgGenerator");
-=======
-    SystemMsg* sMsg = new SystemMsg("ReqMsg");
->>>>>>> b29bdea3f846a3daed214966b018c8ab1d84e8d2
+//    SystemMsg* sMsg = new SystemMsg("ReqMsg");
     //Client D
     sMsg->setClientID(cID);
     //Data ID
