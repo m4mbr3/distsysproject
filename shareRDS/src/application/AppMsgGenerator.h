@@ -29,18 +29,25 @@ class AppMsgGenerator : public cSimpleModule
     int cID;
     //the total number of replicas
     int nReplicas;
-    //The timer for start sending messages to the server, simulating client requests
-    cMessage* timeToSendMessage;
+
     //The replica id to which it is connected
     int replicaID;
-    //the current data id
+    //Operations order
+    std::vector<std::string> operations;
+    //Data items ids
+    std::vector<std::string> dataItemsId;
+    //Counter for counting how many messages have been sent
+    int counter;
+    //The time for the self message timer
+    double timerOffset;
+    //the current data id involved in the current message sent by the client
     std::string dataID;
     //local clock
     int localClock;
+    //The timer for start sending messages to the server, simulating client requests
+    cMessage* timeToSendMessage;
     //build a message to be send into the network
     cMessage* getMessage();
-    //Counter for counting how many messages have been sent
-    int counter;
 
    public:
     //Defining a constructor

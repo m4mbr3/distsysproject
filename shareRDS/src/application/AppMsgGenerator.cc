@@ -31,6 +31,9 @@ AppMsgGenerator::~AppMsgGenerator()
 
 void AppMsgGenerator::initialize()
 {
+    /**
+     * RETRIEVING THE SIMULATION PARAMETERS
+     */
     //We recover the component id
     cID = par("clientID");
     //Validating that a replica ID was defined
@@ -41,46 +44,65 @@ void AppMsgGenerator::initialize()
     //Validating that a replica ID was defined
     if(nReplicas == -1)
      throw cRuntimeError("Invalid number of replicas %d; must be >= 0", nReplicas);
-    //Assigning a replica
-    replicaID = intuniform(0, nReplicas-1);
-    //we start by sending writes requests
-    WATCH(dataID);
+    //We recover the operations order
+    const char * ops = par("operationOrder").stringValue();
+    operations = cStringTokenizer(ops).asVector();
+    //We recover the data items ids
+    const char* di= par("dataItemsID").stringValue();
+    dataItemsId = cStringTokenizer(di).asVector();
+    //Validation for checking that the two vectors have the same size
+    int s1 = operations.size();
+    int s2 = dataItemsId.size();
+    if(s1 != s2)
+        throw cRuntimeError("The number of operations must be equal to the number of data items in client %d", cID);
+    //Initializing the counter
+    counter = 0;
+    //Assigning the replica id defining in the ned parameter
+    replicaID = par("replicaId");
+    /**
+     * CONFIGURING THE SELF MESSAGE FOR KEEP SENDING MESSAGES TO THE REPLICA
+     */
+    //Retrieving the time for the send message timer
+    timerOffset = par("timerOffset").doubleValue();
     //building the first message to send
     timeToSendMessage = new cMessage("clientReqTimer");
     //Scheduling another sending of the message
-    scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
+    scheduleAt(simTime() + exponential(timerOffset), timeToSendMessage);
+    /**
+     * CONFIGURING THE LOCAL CLOCK AND WATCHERS
+     */
     //initializing our local clock
     localClock = 0;
-    //Initializing the counter
-    counter = 0;
+    //we watch which is the data item involved in the message
+    WATCH(dataID);
+
 
 }
 
 cMessage* AppMsgGenerator::getMessage(){
 
-    SystemMsg* sMsg = new SystemMsg("msgFromAppMsgGenerator");
-//    SystemMsg* sMsg = new SystemMsg("ReqMsg");
-//    SystemMsg* sMsg = new SystemMsg("ClientReqMsg");
+    //Validation of the number of msgs already sent
+    int max = operations.size();
+    //if we already sent max number of msgs
+    if(counter == max)
+        return NULL;
+    //otherwise create a message
+    SystemMsg* sMsg = new SystemMsg("ClientReqMsg");
     //Client D
     sMsg->setClientID(cID);
     //Data ID
-    //TODO change it according to the test that you need to do
-    dataID = "a";
+    dataID = dataItemsId[counter];
     sMsg->setDataID(dataID.c_str());
-    //data
+    //Data generated randomly
     sMsg->setData(intuniform(-1000, 1000));
-    //if it is the first message it should be a write
-    //TODO we can also simulate a read for ERROR HANDLING
-    if(counter ==0)
+    //We retrieve the operation involved int the message
+    std::string op = operations[counter];
+    if(op.compare("w") ==0)
     {
         sMsg->setOperation(WRITE);
     }
-    else{
-        int op = intuniform(0, 1);
-        if(op== WRITE)
-            sMsg->setOperation(WRITE);
-        else
-            sMsg->setOperation(READ);
+    else if (op.compare("r") ==0){
+         sMsg->setOperation(READ);
     }
     //timestamp
     localClock++;
@@ -98,9 +120,12 @@ void AppMsgGenerator::handleMessage(cMessage *msg)
         //Building the message
         cMessage * m = getMessage();
         //Sending the message
-        send(m, "replicasOut", replicaID);
-        //Scheduling another sending of the message
-        scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
+        if(m!= NULL)
+        {
+            send(m, "replicasOut", replicaID);
+            //Scheduling another sending of the message
+            scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
+        }
     }
     else{
 

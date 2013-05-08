@@ -21,8 +21,21 @@ package sharerds.application;
 simple AppMsgGenerator
 {
     parameters:
+        //The client id, must be unique in the system
         int clientID = default(-1);
+        //The replica id, must be one of the ids of existing replicas in the simulation
+        //This replica id is the one to which this msg generator will send the msgs
+        int replicaId = default(-1);
+        //The number of replicas
         int numberReplicas = default(-1);
+        //Defines the type of operations that the client should execute during the simulation, SEPARATED BY WHITE SPACE
+        //w = write operation
+        //r = read operation
+        string operationOrder;
+        //Defines the data items id, related to the operations define in operation order, SEPARATED BY WHITE SPACE
+        string dataItemsID;
+        //the time for the timer related to the sending of requests
+        double timerOffset= default(1.0);
     gates:
         input replicasIn[numberReplicas];
         output replicasOut[numberReplicas];
