@@ -99,8 +99,9 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             // retrieve other data from the msg
             int msgClientID = sMsg->getClientID();
             int msgReplicaID = sMsg->getReplicaID();
-            int msgReplyCode = sMsg->getReplyCode();
+            //int msgReplyCode = sMsg->getReplyCode();
             int msgOperation = sMsg->getOperation();
+            int msgOwnerReplicaID = sMsg->getReplicaOwnerID();
             std::string msgDataID = sMsg->getDataID();
             // retrieve the treeID of the msg because it won't change when cloning the msg
             int msgTreeID = sMsg->getTreeId();
@@ -117,8 +118,9 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
                 }
             }
-            // incoming msg is an answer for a RemoteWrite request
-            else if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgReplyCode != NO_REPLY_CODE)) {
+            // incoming msg is an answer for a RemoteWrite request (that should be replied by a remote update from the owner) or it is
+            // a remote update
+            else if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgReplicaID == msgOwnerReplicaID)) {
                 // check if the msg is on top of the outQueue or not
                 // if it's on top then send
                 send(sMsg->dup(), "outAnswer", RW_OUT_GATE);
@@ -130,6 +132,35 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 delete sMsg;
 
             }
+            //The incoming message is a remote write request
+            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID != msgOwnerReplicaID && myReplicaID == msgOwnerReplicaID ){
+                send(sMsg->dup(), "outRequest");
+                //We update the timestamp of the last message processed
+                lcLastMsgSent = sMsg->getLamportClock();
+                //We delete the message
+                delete sMsg;
+            }
+            //The incoming msg is a remote update from another replica
+            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && myReplicaID != msgOwnerReplicaID ){
+                send(sMsg->dup(), "outRequest");
+                //We update the timestamp of the last message processed
+                lcLastMsgSent = sMsg->getLamportClock();
+                //We delete the message
+                delete sMsg;
+            }
+            //The incoming msg is write of a data item that the current replica owns, but is the incoming message from multicast to myself
+            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && myReplicaID == msgOwnerReplicaID ){
+               std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
+               try {
+                   //TODO: check if we need to use * or & or not
+                   inAck = msgsAck.at(msgTreeID);
+                   inAck[msgReplicaID] = true;
+
+               } catch (const std::out_of_range& e) {
+                   throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
+               }
+           }
+
             // incoming msg is from a Client
             else if (gateID == findGate("inClients", msgClientID)){
                 send(sMsg->dup(), "outRequest");
@@ -140,7 +171,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We delete the message
                 delete sMsg;
             }
-            //TODO we need to validate if it is a message from myself in the case of multicast!!
+
 
         }
         //We clear the in queue
@@ -177,8 +208,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     for (int i = 0; i < noOfReplicas; i++) {
                         temp[i] = false;
                         //We put in true the position related to the current replica
+                        /*
                         if(i== myReplicaID)
                             temp[i]= true;
+                        */
                     }
                     //We save the state of the acks of the involved message
                     msgsAck[msgTreeID] = temp;
@@ -231,16 +264,19 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
     }
     //Checking the acks of a message
     else if (msg == timeToCheckAcks) {
+        std::map<long, bool> msgToDelete;
         std::map<long, std::vector<bool> >::iterator it;
         for (it = msgsAck.begin(); it != msgsAck.end(); it++) {
             //The msg id of the msg for which we are waiting acks
             int msgID = it->first;
+            //By default we dont need to delete this message becasue we do not know if it already has received all the acks
+            msgToDelete[msgID] = false;
             // Retrieving the state of the acks of the current msg
             std::vector<bool> acks = it->second;
             //For validating if we already have ALL acks from all the replicas in the system
             bool okToSend = true;
             //The pointer to the message
-            SystemMsg* m = NULL;
+            SystemMsg* m =msgsWaitingForAck[msgID];
             int size = acks.size();
             //We check if we have received all the acks of the current message (msgID)
             for (int i = 0; i < size; i++) {
@@ -250,22 +286,40 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //TODO how many times do we try?
                 if (!acki) { // false
                     okToSend = false;
-                    m =msgsWaitingForAck[msgID];
+                    //We update the lamport clock because an event is happening with the replica system
+                   lamportClockHandle(m);
+                   //Set up the new lamport clock of the message
+                   m->setLamportClock(lamportClock);
                     send(m->dup(), "outReplicas", i);
                 }
             }
             //If all acks has been received for the current message (msgID)
             if (okToSend) {
+                //We update the lamport clock because an event is happening with the replica system
+                lamportClockHandle(m);
+                //Set up the new lamport clock of the message
+                m->setLamportClock(lamportClock);
                 //Sending to the remote update answer gate, such that the remote write protocol can finish processing the request
                 send(m->dup(), "outAnswer", RU_OUT_GATE);
                 //We update our last processed lamport clock
-                lcLastMsgSent = m->getLamportClock();
-                //We delete the message id from the vector of the messages waiting for acks
-                msgsWaitingForAck.erase(msgID);
-                //We delete the message id from the vector of the messages to which we need to check the acks state
-                msgsAck.erase(msgID);
+                //lcLastMsgSent = m->getLamportClock();
+                msgToDelete[msgID] = true;
                 //We delete the reference to the local message, because we always have been sent a duplication
                 delete m;
+            }
+        }
+        //We delete the messages that already received all the acks
+        std::map<long, bool>::iterator it2;
+        for (it2 = msgToDelete.begin(); it2 != msgToDelete.end(); it2++)
+        {
+            bool del = it2->second;
+            if(del)
+            {
+               long msgID =it2->first;
+                //We delete the message id from the vector of the messages waiting for acks
+               msgsWaitingForAck.erase(msgID);
+               //We delete the message id from the vector of the messages to which we need to check the acks state
+               msgsAck.erase(msgID);
             }
         }
         //While there are messages waiting for acks, we need to keep having a timer for checking the acks of that mesasge

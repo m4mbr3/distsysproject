@@ -57,6 +57,10 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     //1.2 We retrieved the reply code
     int msgReplyCode = sMsg->getReplyCode();
     //1.3 Checking the success of the message
+    //Retrieving the replica sender ID
+     int msgReplicaID = sMsg->getReplicaID();
+     //Retrieving the replica owner ID
+     int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
     //We receive a message from the write ahead protocol module
     if(gateID== gate("in",WAP_IN_GATE)->getId())
     {
@@ -99,15 +103,19 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         //have executed succesfully a read/write request
         if(msgReplyCode == SUCCESS){
             //We write an owned data item
-            if(ownDataItem && msgOperationID == WRITE){
-                //We set up the replica ID owner that will generate a request for an update to data item in the whole system
-                 sMsg->setReplicaOwnerID(replicaID);
+            if(msgReplicaOwnerID== replicaID && msgOperationID == WRITE){
                 //We send the update to all the other replica by using multicasting
                 send(sMsg, "out", RU_OUT_GATE);
+                //We check if we need to answer a remote write request, the msg comes from another replica and i am the owner
+                if(msgReplicaID != NO_REPLICA){
+                    //We send the answer to the remote write request through invocation manager
+                    send(sMsg->dup(), "out", IM_OUT_GATE);
+                }
+
             }
             //We write locally and if the writing is from a data item that was written remotely on the owner replica and is requiring
             //an update/creation in the current replica
-            else if(!ownDataItem && msgOperationID == WRITE)
+            else if(msgReplicaOwnerID!= replicaID && msgOperationID == WRITE)
             {
                 //We answer that the request has finished to the requester
                 send(sMsg, "out", IM_OUT_GATE);
@@ -169,10 +177,7 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
      */
      else if(gateID == gate("in",IM_IN_GATE)->getId())
      {
-         //Retrieving the replica sender ID
-         int msgReplicaID = sMsg->getReplicaID();
-         //Retrieving the replica owner ID
-         int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
+
          // The message is a write operation, so it can come from a client or from a replica
          if(msgOperationID == WRITE)
          {
@@ -182,25 +187,28 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
             try{
                 //checking if the data item with the given ID already exists in the system
                 replica =dataItemsOwners.at(msgDataID);
-                //If it exist, and the message do not come from a replica, and the
+                //If it exist, and the message do not come from a replica (comes from a client), and the
                 //the owner of the data item is the current replica
                 if(msgReplicaID== NO_REPLICA && replica == replicaID)
                 {
-                    //we update our flag
-                    ownDataItem = true;
-                    //We update the owner field of the message
-                    sMsg->setReplicaOwnerID(replicaID);
-                    // we log the write in the case the updat to other replicas cannot be done,and therefore we should able to revert the write
+                   //We update the owner field of the message
+                   sMsg->setReplicaOwnerID(replicaID);
+                   // we log the write in the case the update to other replicas cannot be done,and therefore we should able to revert the write
                    sMsg->setOperation(UPDATE);
                    send(msg,"out", WAP_OUT_GATE);
                 }
                 //If it exists, and the message comes from another replica, then we check that
                 //actually the data items belong to the replica id in the message and then meaning that this is
                 //an update
-                else if(msgReplicaID!= NO_REPLICA && replica == msgReplicaOwnerID)
+                else if(msgReplicaID!= NO_REPLICA && replica == msgReplicaOwnerID && replica!= replicaID)
                 {
-                    //we update the owned flag
-                    ownDataItem = false;
+                    //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
+                    send(msg, "out", DIM_OUT_GATE);
+                }
+                //If it exists, and the message comes from another replica, then we check that
+               //actually the data items belong to this replica id  and then meaning that this is
+               //a remote write
+                else if(msgReplicaID!= NO_REPLICA && replica == msgReplicaOwnerID && replica== replicaID){
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
                     send(msg, "out", DIM_OUT_GATE);
                 }
@@ -208,21 +216,18 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                 //and the current replica is not the owner (is another replica) then we send a remote write
                 else if(msgReplicaID== NO_REPLICA && replica!= replicaID)
                 {
-                    //we update our flag
-                   ownDataItem = false;
                    //We update the owner field of the message
                    sMsg->setReplicaOwnerID(replica);
                    // We send the update of the data item to the remote replica that owns it
                    send(msg, "out", RW_OUT_GATE);
                 }
+
              }
             catch (const std::out_of_range& e)
             {
                 //the data items does not exists in the system
                 //the data item is send by a client and therefore the data item belongs to the current replica
                if(msgReplicaID== NO_REPLICA){
-                   //Then it is a new data item in the whole system and the owner is the current replica
-                   ownDataItem = true;
                    //We relate the replica owner ID with the data item id
                     dataItemsOwners[msgDataID] =replicaID;
                    //We update the owner field of the message
@@ -235,13 +240,14 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                  {
                      //We relate the replica owner ID with the data item id
                      dataItemsOwners[msgDataID] =msgReplicaOwnerID;
-                     //We set up our boolean as not owned data item
-                     ownDataItem = false;
                  }
+
                //log the write because the message will be send through the network, which can fail and therefore we must rollback the
                //the related executed writings
                sMsg->setOperation(UPDATE);
                send(msg,"out", WAP_OUT_GATE);
+
+               //send(msg, "out", DIM_OUT_GATE);
             }
          }
          //if the request is a read, we read the current value locally the data items manager should check the
