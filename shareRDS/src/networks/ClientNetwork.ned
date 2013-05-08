@@ -13,13 +13,13 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package sharerds.application;
+package sharerds.networks;
 
-simple Application
+simple ClientNetwork
 {
     parameters:
         int clientID = default(-1);
     gates:
-        input in;
-        output out;
+        input inReplicas[];
+        output outReplicas[];
 }

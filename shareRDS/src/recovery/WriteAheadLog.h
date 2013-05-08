@@ -32,6 +32,10 @@ class WriteAheadLog : public cSimpleModule
     //Is the map of the state of the writings executed on each item
     //1= COMMIT, 0= ROLLBACK
     std::map<std::string, bool> dataItemsState;
+  public:
+    WriteAheadLog();
+    virtual ~WriteAheadLog();
+
   protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);

@@ -39,6 +39,14 @@ class AppMsgGenerator : public cSimpleModule
     int localClock;
     //build a message to be send into the network
     cMessage* getMessage();
+    //Counter for counting how many messages have been sent
+    int counter;
+
+   public:
+    //Defining a constructor
+    AppMsgGenerator();
+    //defining the destructor
+    virtual ~AppMsgGenerator();
 
   protected:
     virtual void initialize();

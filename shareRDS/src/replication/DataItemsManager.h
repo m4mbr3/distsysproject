@@ -31,10 +31,14 @@
 class DataItemsManager : public cSimpleModule
 {
   private:
-   //This map contains the data items with it respective id and data
+  //This map contains the data items with it respective id and data
   std::map<std::string, int> dataItems;
   //The replica id where the dataitem manager belongs to
   int replicaID;
+
+  public:
+  DataItemsManager();
+  virtual ~DataItemsManager();
 
   protected:
     virtual void initialize();

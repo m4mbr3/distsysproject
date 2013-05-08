@@ -13,13 +13,27 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package sharerds.application;
+#ifndef __SHARERDS_BASICNETWORK_H_
+#define __SHARERDS_BASICNETWORK_H_
 
-simple Application
-{
-    parameters:
-        int clientID = default(-1);
-    gates:
-        input in;
-        output out;
-}
+#include <omnetpp.h>
+#include <cstdlib>
+#include "SystemMsg_m.h"
+#define FROM_REPLICAGROUPMANAGER 0
+#define FROM_CLIENTNETWORK 1
+#define TO_INVOCATIONMANAGER 0
+#define TO_CLIENTNETWORK 1
+#define TO_LAMPORTCLOCK 2
+#define FROM_LAMPORTCLOCK 2
+
+
+class BasicNetwork : public cSimpleModule {
+  public:
+    std::map <int,std::vector<int> > open_connections;
+    std::vector<int>ReplicaIDs;
+  protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
+};
+
+#endif

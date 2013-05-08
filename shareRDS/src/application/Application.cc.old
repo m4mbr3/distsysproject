@@ -13,13 +13,29 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package sharerds.application;
+#include "Application.h"
+#include "../messages/SystemMsg_m.h"
+Define_Module(Application);
 
-simple Application
+void Application::initialize()
 {
-    parameters:
-        int clientID = default(-1);
-    gates:
-        input in;
-        output out;
+    // TODO - Generated method body
+
 }
+
+void Application::handleMessage(cMessage *msg)
+{
+    // TODO - Generated method body
+    SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+    //The operation done by this module are understand messages and save or delete elements
+}
+map<std::string,int> getDataClientByName(std::string name, int value)
+{
+    return dataClient.insert
+}
+void setDataClientElement(string name, int value)
+{
+    dataClient.insert(decltype(dataClient)::value_type(name,value));
+}
+
+

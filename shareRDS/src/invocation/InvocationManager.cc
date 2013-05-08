@@ -3,15 +3,15 @@
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
+//
 
 #include "InvocationManager.h"
 #include "SystemMsg_m.h"
@@ -43,6 +43,6 @@ void InvocationManager::handleMessage(cMessage *msg)
     else if(gateID == gate("in", ANSWER_IN_GATE)->getId())
     {
         //We send back the answer to the component that has sent the invocation to which we already have the answer
-         send(msg, "out", ANSWER_OUT_GATE);
+        send(msg, "out", ANSWER_OUT_GATE);
     }
 }

@@ -3,20 +3,31 @@
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
+//
 
 #include "RemoteWriteProtocol.h"
 #include "SystemMsg_m.h"
 
 Define_Module(RemoteWriteProtocol);
+
+RemoteWriteProtocol::RemoteWriteProtocol()
+{
+    replicaID =-1;
+    ownDataItem = false;
+}
+
+RemoteWriteProtocol::~RemoteWriteProtocol()
+{
+    dataItemsOwners.clear();
+}
 
 void RemoteWriteProtocol::initialize()
 {
@@ -64,7 +75,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
              sMsg->setOperation(DELETE);
              //We delete the data item
              send(msg, "out", DIM_OUT_GATE);
-
         }
         //If the message through the network was successfully sent and executed on the other replicas
         else if(msgOperationID == COMMIT && msgReplyCode == SUCCESS)
@@ -124,22 +134,13 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
          {
              //We write locally
              send(msg, "out", DIM_OUT_GATE);
-             /*
-             //We log the write locally
-             sMsg->setOperation(UPDATE);
-             send(msg, "out", WAP_OUT_GATE);
-             */
          }
          //The remote write failed because something bad happen during the communication
          else if (msgReplyCode== FAIL)
          {
              //We send the failure message to the client using the invocation manager
              send(sMsg, "out", IM_OUT_GATE);
-             //throw cRuntimeError("REPLICA_WRITE_PROTOCOL: (3) A strange error happens when logging a write request in the replica %d", replicaID);
-
          }
-
-
      }
     //We receive an update message answer from the whole replicas, this is validated by the
     //totally ordered when all multicasted messages  are ack!!
@@ -202,11 +203,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                     ownDataItem = false;
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
                     send(msg, "out", DIM_OUT_GATE);
-                    /*
-                    // we log the write in the case the update is cancel for some reason
-                    sMsg->setOperation(UPDATE);
-                    send(msg, "out", WAP_OUT_GATE);
-                    */
                 }
                 //if it exists, and the message do not have a replica ID, then the request comes from a client
                 //and the current replica is not the owner (is another replica) then we send a remote write

@@ -31,14 +31,29 @@ Vinh The Hoang
 =================
 Monica Lozano
 =================
-+Implement the data items manager
-+Implement the remoteWrite protocol with the primary table of data items
-+Implement the invocation manager: This should be use on the compound module of the client
- + Update the invocation manager with the last changes on inputs and outputs
-+Implement the write ahead log.
-+Create Replica Compound Module(Replica.ned)
- +Finish connections with network module
--Create a network file with a configuration file for simulating the remote write protocol.
++Review the classes and build the destructors of each class
+ + AppMsgGenerator
+ + DataItemsManager
+ + ReplicaWriteProtocol
+ + WriteAheadProtocol
+ + ReplicaNetwork
+ 	-Fix the part that delete the pointers of each message saved in the maps
++Fix the duplication of messages in the replica network
++Fix logic related to processing the output queue on the replica network
+	-Test it
++Creation and test of a network description file for testing the replica module (ReplicaTest.ned)
+	-Tests:
+		-Put two clients and one replica : Doing random operations
+		-Put two clients and one replica: One always read, and the other one always writes
++Creation and test of a ned for testing the remote write protocol
+	-Tests:
+		-Put one client and 3 replicas: This test the remote update and the multicast functionality
+		-Put two clients and 2 replicas: For testing a remote write
+-Files to delete: 
+	-LogManager .cc, .h, .ned
+	-BarkleySynch .cc, .h, .ned
+	-AtomicMulticast .cc,.h, .ned
+	-BasicMulticast .cc, .h, .ned
 
 =================
 DESIGN DOUBTS

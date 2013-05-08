@@ -13,13 +13,24 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package sharerds.application;
+#ifndef __SHARERDS_APPLICATION_H_
+#define __SHARERDS_APPLICATION_H_
 
-simple Application
+#include <omnetpp.h>
+using namespace std;
+/**
+ * TODO - Generated class
+ */
+class Application : public cSimpleModule
 {
-    parameters:
-        int clientID = default(-1);
-    gates:
-        input in;
-        output out;
-}
+    public:
+        //Get and Set method to access the dataClient
+        virtual map<string,int> getDataClientByName(string name);
+        virtual void setDataClientElement(string name,int value);
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
+        map<string, int> dataClient;
+};
+
+#endif

@@ -13,12 +13,12 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#include "LamportClock.h"
+#include "LamportClockClient.h"
 #include "SystemMsg_m.h"
 
-Define_Module(LamportClock);
+Define_Module(LamportClockClient);
 
-void LamportClock::initialize()
+void LamportClockClient::initialize()
 {
     //We can see the current value of the parameter on the interface
     WATCH(localClock);
@@ -27,12 +27,16 @@ void LamportClock::initialize()
 
 }
 
-void LamportClock::handleMessage(cMessage *msg)
+void LamportClockClient::handleMessage(cMessage *msg)
 {
     //Retrieving the msg just received
     SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+    int gateID = sMsg->getArrivalGateId();
+    //The name of the message received!!, IT SHOULD HAVE A NAME SET UP BY THE SENDER
+    EV<< "LAMPORT_SYNCH: Received message: " << sMsg->getName();
     //Retrieving the current timestamp of the message
     int rcvLamportClock =sMsg->getLamportClock();
+    EV<< "LAMPORT_SYNCH: The msg has timestamp" << rcvLamportClock;
     // updating the local clock of the module usign the received value
     if(rcvLamportClock >localClock)
     {
@@ -42,12 +46,14 @@ void LamportClock::handleMessage(cMessage *msg)
     {
         localClock = localClock + 1;
     }
-    // if the msg is coming from inNew gate then we also need to update the lamport clock of the msg
-    if (sMsg->getArrivalGateId() == findGate("inNew")){
-        //Updating the lamport clock of the msg
-        sMsg->setLamportClock(localClock);
-    }
+    //Updating the lamport clock of the msg
+    sMsg->setLamportClock(localClock);
     //Sending the msg
-    send(sMsg, "out");
-
+    EV<< "LAMPORT_SYNCH: The msg  new timestamp" << localClock;
+    if (gateID == gate("in",FROM_BASICNETWORK)->getId()){
+        send(sMsg, "out",TO_BASICNETWORK);
+    }
+    else if(gateID == gate("in", FROM_CLIENTNETWORK)->getId()){
+        send(sMsg, "out",TO_CLIENTNETWORK);
+    }
 }

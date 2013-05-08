@@ -34,35 +34,58 @@
 // outRemoteUpdate
 #define RU_OUT_GATE 1
 
-// offset for timer to count for sending out request
-#define TIMER_OFFSET 1
+// offsets for timers
+#define PROCESSING_TIMER_OFFSET 5.0
+#define SENDING_TIMER_OFFSET 15.0
+#define CHECKING_TIMER_OFFSET 15.0
+
+
+
+//The default values
+#define NO_REPLY_CODE -1
+
 
 class ReplicaNetwork : public cSimpleModule
 {
-private:
-    int myReplicaID;      //ID of the running replica module
-    int lamportClock;         // scalar clock ~ lamportClock
+    private:
+        //ID of the running replica module
+        int myReplicaID;
+        // scalar clock ~ lamportClock
+        int lamportClock;
+        // timestamp of the last processed msg on the replica such that we can accept or reject incoming requests
+        int lcLastMsgSent;
 
-    int lcLastMsgSent;     // timestamp of the last sent msg
+        //MANAGING THE MULTICAST
+        // Queue for managing the acks that are being waited as answers for a remote update sent out from this replica
+        std::map<long, std::vector<bool> > msgsAck;
+        //The messages for which we should take care of the acks
+        std::map<long, SystemMsg*> msgsWaitingForAck;
 
-    std::map<long, std::vector<bool> > msgsAck;     // queue for acks that are being waited as answers for RU sent out
-    std::map<long, SystemMsg*> msgsWaitingForAck;
-    std::vector<SystemMsg*> inQueue;
-    // queue for requests that are received from outside and in queue for processing
-    // those are msgs from Clients, from Replicas requests or Replicas answers
+        //MANAGING THE INCOMING AND OUTGOING MESSAGES
+        // queue for requests that are received from outside and in queue for processing
+        // those are msgs from Clients, from Replicas requests or Replicas answers
+        std::vector<SystemMsg*> inQueue;
+        // queue for requests that are in queue for sending out
+        std::vector<SystemMsg*> outQueue;
 
-    std::vector<SystemMsg*> outQueue;      // queue for requests that are in queue for sending out
+        //SELF MESSAGES
+        //A self msg to trigger queuing process overtime
+        cMessage *timeToProcessRequest;
+        //A self msg to trigger sending out msg overtime
+        cMessage *timeToSendOutRequest;
+        //A self msg to trigger checking out ack msgs overtime
+        cMessage *timeToCheckAcks;
+        //Update the local lamport clock of the replica
+        void lamportClockHandle(SystemMsg *msg);
+        //Order the replica messages in the inQueue
+        void orderInQueue();
+    public:
+        ReplicaNetwork();
+        virtual ~ReplicaNetwork();
 
-    cMessage *timeToProcessRequest;    // a self msg to trigger queuing process overtime
-    cMessage *timeToSendOutRequest;     // a self msg to trigger sending out msg overtime
-    cMessage *timeToCheckAcks;
-
-    void lamportClockHandle(SystemMsg *msg);
-    void orderInQueue();
-
-protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    protected:
+        virtual void initialize();
+        virtual void handleMessage(cMessage *msg);
 };
 
 #endif
