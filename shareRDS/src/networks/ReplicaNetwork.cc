@@ -202,6 +202,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     /**
                      * Multicast
                      */
+                    bubble("Multicasting");
                     //We multicast the messages, including ourselves
                     for (int i = 0; i< noOfReplicas; i++) {
                         //We send a duplicate of the current message
@@ -210,6 +211,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                         outgoingMsg->setReplyCode(NO_REPLY_CODE);
                         send(outgoingMsg, "outReplicas",i);
                     }
+
+                    //Checking if the timer is already schedule
+                    if(timeToCheckAcks->isScheduled())
+                       {
+                           cancelEvent(timeToCheckAcks);
+                       }
                     //We schedule the timer for checking the state of the acks
                     scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
                 }
@@ -275,13 +282,21 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 bool acki = acks[i];
                 // check if we already received the ACK or not, if not then we resend the request
                 //TODO how many times do we try?
+                /**
+                 * Retrying the acks not received
+                 */
                 if (!acki) { // false
                     okToSend = false;
                     //We update the lamport clock because an event is happening with the replica system
                    lamportClockHandle(m);
+                   //Outgoing msg
+                   SystemMsg* outgoingm= m->dup();
                    //Set up the new lamport clock of the message
-                   m->setLamportClock(lamportClock);
-                    send(m->dup(), "outReplicas", i);
+                   outgoingm->setLamportClock(lamportClock);
+                   //Set up the reply code as -1
+                   outgoingm->setReplyCode(NO_REPLY_CODE);
+                   //Sending the message again
+                   send(outgoingm, "outReplicas", i);
                 }
             }
             //If all acks has been received for the current message (msgID)
@@ -315,6 +330,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         }
         //While there are messages waiting for acks, we need to keep having a timer for checking the acks of that mesasge
         if (!msgsWaitingForAck.empty()) {
+            if(timeToCheckAcks->isScheduled())
+            {
+                cancelEvent(timeToCheckAcks);
+            }
             scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
         }
     }

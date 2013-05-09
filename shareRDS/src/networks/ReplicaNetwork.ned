@@ -25,7 +25,7 @@ simple ReplicaNetwork
         //Timers parameters
 		double processingTimerOffset = default(2.0);
 		double sendingTimerOffset = default(3.0);
-		double checkAckTimerOfset = default(10.0);
+		double checkAckTimerOfset = default(14.0);
     gates:
         input inRemoteRequests[2];		// from RemoteWriteProtocol
         							// [0] for remoteWrite

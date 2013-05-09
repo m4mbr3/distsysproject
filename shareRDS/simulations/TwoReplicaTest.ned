@@ -49,8 +49,8 @@ network TwoReplicaTest
                 //This client msgs are process by the replica with id 0
                 replicaId = 0;
                 //Writting and reading a set of data items in the initial connected replica
-                operationOrder ="w";
-                dataItemsID = "a";
+                operationOrder ="w r";
+                dataItemsID = "a a";
                 numberReplicas = nReplicas;
 
                 @display("p=82,138");
