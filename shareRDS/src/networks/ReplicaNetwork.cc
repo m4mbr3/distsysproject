@@ -89,6 +89,7 @@ void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
 
 void ReplicaNetwork::handleMessage(cMessage *msg)
 {
+
     // Time to start processing the messages saved in the inQueue
     if (msg == timeToProcessRequest) {
         int size = inQueue.size();
@@ -172,6 +173,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         int size = outQueue.size();
         for (int i = 0; i < size; i++) {
             SystemMsg* sMsg = outQueue.at(i);
+
+            // retrieve the gateID of the gate from which we received the msg
+//            int gateID = sMsg->getArrivalGateId();
+
             // retrieve other data from the msg
             int msgClientID = sMsg->getClientID();
             int msgReplicaID = sMsg->getReplicaID();
