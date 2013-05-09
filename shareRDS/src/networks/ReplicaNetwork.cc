@@ -215,7 +215,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                         send(outgoingMsg, "outReplicas",i);
                     }
                     //We schedule the timer for checking the state of the acks
-                    scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
+                    if (timeToCheckAcks->isScheduled()) {
+                        cancelEvent(timeToCheckAcks);
+                    }
+                    else {
+                        scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
+                    }
                 }
             }
             //We need to send a request for a write request to the owner of the data item (a remote replica)
