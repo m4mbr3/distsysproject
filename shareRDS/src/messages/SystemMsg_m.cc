@@ -48,6 +48,7 @@ EXECUTE_ON_STARTUP(
     if (!e) enums.getInstance()->add(e = new cEnum("ReplyCodeType"));
     e->insert(FAIL, "FAIL");
     e->insert(SUCCESS, "SUCCESS");
+    e->insert(SUCC_CLIENT, "SUCC_CLIENT");
 );
 
 Register_Class(SystemMsg);

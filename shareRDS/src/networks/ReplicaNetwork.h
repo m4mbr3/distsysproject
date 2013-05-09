@@ -43,6 +43,7 @@
 
 //The default values
 #define NO_REPLY_CODE -1
+#define NO_REPLICA -1
 
 
 class ReplicaNetwork : public cSimpleModule

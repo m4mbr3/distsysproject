@@ -94,6 +94,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
     if (msg == timeToProcessRequest) {
         int size = inQueue.size();
         for (int i = 0; i < size; i++) {
+            //We retrieve the message
             SystemMsg* sMsg = inQueue.at(i);
             // retrieve the gateID of the gate from which we received the msg
             int gateID = sMsg->getArrivalGateId();
@@ -107,20 +108,19 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             // retrieve the treeID of the msg because it won't change when cloning the msg
             int msgTreeID = sMsg->getTreeId();
 
-            // the incoming msg is an ACK answer of a RemoteUpdate from another replica
+            // the incoming msg from another replica and it is an ACK answer of a RemoteUpdate from the current replica
             if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgOperation == ACK)) {
                 std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
                 try {
-                    //TODO: check if we need to use * or & or not
                     inAck = msgsAck.at(msgTreeID);
                     inAck[msgReplicaID] = true;
+                    msgsAck[msgTreeID]=inAck;
 
                 } catch (const std::out_of_range& e) {
                     throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
                 }
             }
-            // incoming msg is an answer for a RemoteWrite request (that should be replied by a remote update from the owner) or it is
-            // a remote update
+            // incoming msg is an answer for a RemoteWrite request that the current replica has request in a remote write request
             else if ((gateID == findGate("inReplicas", msgReplicaID)) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == SUCCESS) {
                 // check if the msg is on top of the outQueue or not
                 // if it's on top then send
@@ -173,10 +173,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         int size = outQueue.size();
         for (int i = 0; i < size; i++) {
             SystemMsg* sMsg = outQueue.at(i);
-
-            // retrieve the gateID of the gate from which we received the msg
-//            int gateID = sMsg->getArrivalGateId();
-
             // retrieve other data from the msg
             int msgClientID = sMsg->getClientID();
             int msgReplicaID = sMsg->getReplicaID();
@@ -230,12 +226,13 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
            }
             //incoming msg is an answer of a RemoteWrite request from a remote replica, we need to send it to the sender
-            else if (msgReplicaOwnerID == myReplicaID && gateID == findGate("inAnswer")){
+            else if (msgReplicaID!=NO_REPLICA && msgReplicaID != myReplicaID && msgReplicaOwnerID == myReplicaID && gateID == findGate("inAnswer")){
+                //We send the answer back to the sender
                 send(sMsg->dup(), "outReplicas", msgReplicaID);
             }
             //The msg is an answer of a RemoteUpdate request from a remote replica and then we need to send it to the replicaOwnerID
             //In fact the replicaOwner on the message SHOULD be the same as the replica sender
-            else if (msgReplicaOwnerID != myReplicaID && msgReplicaID != myReplicaID && gateID == findGate("inAnswer")) {
+            else if (msgReplicaID!=NO_REPLICA && msgReplicaID != myReplicaID && msgReplicaOwnerID != myReplicaID  && gateID == findGate("inAnswer")) {
                 //We set up the operation as an ACK
                 sMsg->setOperation(ACK);
                 //We send the msg to the owner of the data item that has requested the update of the variable
@@ -243,7 +240,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             }
             //The msg is an answer of a RemoteUpdate request from the current replica and then we need to send it to the replicaOwnerID
             //In fact the replicaOwner on the message SHOULD be the same as the replica sender
-            else if (msgReplicaOwnerID == myReplicaID && msgReplicaID == myReplicaID && gateID == findGate("inAnswer")) {
+            else if (msgReplicaID!=NO_REPLICA && msgReplicaID == myReplicaID && msgReplicaOwnerID == myReplicaID  && gateID == findGate("inAnswer") && msgReplyCode ==SUCCESS) {
                 //We set up the operation as an ACK
                 sMsg->setOperation(ACK);
                 //We send the msg to the owner of the data item that has requested the update of the variable
@@ -253,8 +250,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
            else {
                send(sMsg->dup(), "outClients", msgClientID);
            }
-            ///We delete the reference to the message
-            //outQueue.erase(outQueue.begin()+i);
             //We delete the message
             delete sMsg;
         }
