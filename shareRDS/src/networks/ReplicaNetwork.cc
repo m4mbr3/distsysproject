@@ -107,7 +107,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             // retrieve the treeID of the msg because it won't change when cloning the msg
             int msgTreeID = sMsg->getTreeId();
 
-            // if the incoming msg is an ACK answer of a RemoteUpdate from another replica
+            // the incoming msg is an ACK answer of a RemoteUpdate from another replica
             if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgOperation == ACK)) {
                 std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
                 try {
@@ -119,6 +119,22 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
                 }
             }
+            //The incoming msg is a remote update from another replica
+            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && myReplicaID != msgOwnerReplicaID ){
+                send(sMsg->dup(), "outRequest");
+                //We update the timestamp of the last message processed
+                lcLastMsgSent = sMsg->getLamportClock();
+                //We delete the message
+                delete sMsg;
+            }
+            //The incoming message is a remote write request
+           else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID != msgOwnerReplicaID && myReplicaID == msgOwnerReplicaID ){
+               send(sMsg->dup(), "outRequest");
+               //We update the timestamp of the last message processed
+               lcLastMsgSent = sMsg->getLamportClock();
+               //We delete the message
+               delete sMsg;
+           }
             // incoming msg is an answer for a RemoteWrite request (that should be replied by a remote update from the owner) or it is
             // a remote update
             else if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgReplicaID == msgOwnerReplicaID)) {
@@ -133,35 +149,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 delete sMsg;
 
             }
-            //The incoming message is a remote write request
-            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID != msgOwnerReplicaID && myReplicaID == msgOwnerReplicaID ){
-                send(sMsg->dup(), "outRequest");
-                //We update the timestamp of the last message processed
-                lcLastMsgSent = sMsg->getLamportClock();
-                //We delete the message
-                delete sMsg;
-            }
-            //The incoming msg is a remote update from another replica
-            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && myReplicaID != msgOwnerReplicaID ){
-                send(sMsg->dup(), "outRequest");
-                //We update the timestamp of the last message processed
-                lcLastMsgSent = sMsg->getLamportClock();
-                //We delete the message
-                delete sMsg;
-            }
-            //The incoming msg is write of a data item that the current replica owns, but is the incoming message from multicast to myself
-            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && myReplicaID == msgOwnerReplicaID ){
-               std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
-               try {
-                   //TODO: check if we need to use * or & or not
-                   inAck = msgsAck.at(msgTreeID);
-                   inAck[msgReplicaID] = true;
-
-               } catch (const std::out_of_range& e) {
-                   throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
-               }
-           }
-
             // incoming msg is from a Client
             else if (gateID == findGate("inClients", msgClientID)){
                 send(sMsg->dup(), "outRequest");
@@ -212,11 +199,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     std::vector<bool> temp(noOfReplicas);
                     for (int i = 0; i < noOfReplicas; i++) {
                         temp[i] = false;
-                        //We put in true the position related to the current replica
-                        /*
-                        if(i== myReplicaID)
-                            temp[i]= true;
-                        */
                     }
                     //We save the state of the acks of the involved message
                     msgsAck[msgTreeID] = temp;
@@ -247,7 +229,15 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             }
             //The msg is an answer of a RemoteUpdate request from a remote replica and then we need to send it to the replicaOwnerID
             //In fact the replicaOwner on the message SHOULD be the same as the replica sender
-            else if (msgReplicaOwnerID != myReplicaID && gateID == findGate("inAnswer")) {
+            else if (msgReplicaOwnerID != myReplicaID && msgReplicaID != myReplicaID && gateID == findGate("inAnswer")) {
+                //We set up the operation as an ACK
+                sMsg->setOperation(ACK);
+                //We send the msg to the owner of the data item that has requested the update of the variable
+                send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
+            }
+            //The msg is an answer of a RemoteUpdate request from the current replica and then we need to send it to the replicaOwnerID
+            //In fact the replicaOwner on the message SHOULD be the same as the replica sender
+            else if (msgReplicaOwnerID == myReplicaID && msgReplicaID == myReplicaID && gateID == findGate("inAnswer")) {
                 //We set up the operation as an ACK
                 sMsg->setOperation(ACK);
                 //We send the msg to the owner of the data item that has requested the update of the variable
