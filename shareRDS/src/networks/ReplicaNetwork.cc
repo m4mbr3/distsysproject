@@ -100,7 +100,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             // retrieve other data from the msg
             int msgClientID = sMsg->getClientID();
             int msgReplicaID = sMsg->getReplicaID();
-            //int msgReplyCode = sMsg->getReplyCode();
+            int msgReplyCode = sMsg->getReplyCode();
             int msgOperation = sMsg->getOperation();
             int msgOwnerReplicaID = sMsg->getReplicaOwnerID();
             std::string msgDataID = sMsg->getDataID();
@@ -119,8 +119,22 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
                 }
             }
-            //The incoming msg is a remote update from another replica
-            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && myReplicaID != msgOwnerReplicaID ){
+            // incoming msg is an answer for a RemoteWrite request (that should be replied by a remote update from the owner) or it is
+            // a remote update
+            else if ((gateID == findGate("inReplicas", msgReplicaID)) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == SUCCESS) {
+                // check if the msg is on top of the outQueue or not
+                // if it's on top then send
+                send(sMsg->dup(), "outAnswer", RW_OUT_GATE);
+                //We update the timestamp of the last message processed
+                lcLastMsgSent = sMsg->getLamportClock();
+                ///We delete the reference to the message
+                //inQueue.erase(inQueue.begin()+i);
+                //We delete the message
+                delete sMsg;
+
+            }
+            //The incoming msg is a remote update request from another replica
+            else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == NO_REPLY_CODE){
                 send(sMsg->dup(), "outRequest");
                 //We update the timestamp of the last message processed
                 lcLastMsgSent = sMsg->getLamportClock();
@@ -135,20 +149,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                //We delete the message
                delete sMsg;
            }
-            // incoming msg is an answer for a RemoteWrite request (that should be replied by a remote update from the owner) or it is
-            // a remote update
-            else if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgReplicaID == msgOwnerReplicaID)) {
-                // check if the msg is on top of the outQueue or not
-                // if it's on top then send
-                send(sMsg->dup(), "outAnswer", RW_OUT_GATE);
-                //We update the timestamp of the last message processed
-                lcLastMsgSent = sMsg->getLamportClock();
-                ///We delete the reference to the message
-                //inQueue.erase(inQueue.begin()+i);
-                //We delete the message
-                delete sMsg;
 
-            }
             // incoming msg is from a Client
             else if (gateID == findGate("inClients", msgClientID)){
                 send(sMsg->dup(), "outRequest");
