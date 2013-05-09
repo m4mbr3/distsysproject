@@ -62,33 +62,19 @@ void ReplicaNetwork::initialize()
 
     // schedule to send msg to request to process queuing msg
     // send this to InvocationManager
-<<<<<<< HEAD
-    scheduleAt(simTime() + 1, timeToProcessRequest);
-=======
     pTimerOffset = par("processingTimerOffset").doubleValue();
     scheduleAt(simTime() + exponential(pTimerOffset), timeToProcessRequest);
->>>>>>> 6bd9ed973a82344d1c220e2800545788f02cf59a
 
     sTimerOffset = par("sendingTimerOffset").doubleValue();
     timeToSendOutRequest = new cMessage("sendRequestTimer");
     // schedule to process outQueue
-<<<<<<< HEAD
-    scheduleAt(simTime() + 2, timeToSendOutRequest);
 
-<<<<<<< HEAD
-    timeToCheckAcks = new cMessage("checkAcks");
-    scheduleAt(simTime() + 3, timeToCheckAcks);
-
-=======
     timeToCheckAcks = new cMessage("checkAcksTimer");
     scheduleAt(simTime() + exponential(4.0), timeToCheckAcks);
->>>>>>> 0ba985d311f93f8dd7b690d435cc1cb153eb3006
-=======
     scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
 
     caTimerOffset =  par("checkAckTimerOfset").doubleValue();
     timeToCheckAcks = new cMessage("checkAcksTimer");
->>>>>>> 6bd9ed973a82344d1c220e2800545788f02cf59a
 }
 
 void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
