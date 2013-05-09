@@ -47,12 +47,14 @@ enum OperationType {
  * enum ReplyCodeType{
  * FAIL=0;
  * SUCCESS=1;
+ * SUCC_CLIENT=2;
  * };
  * </pre>
  */
 enum ReplyCodeType {
     FAIL = 0,
-    SUCCESS = 1
+    SUCCESS = 1,
+    SUCC_CLIENT = 2
 };
 
 /**

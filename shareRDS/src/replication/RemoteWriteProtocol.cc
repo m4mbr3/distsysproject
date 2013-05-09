@@ -86,6 +86,8 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         //If the message through the network was successfully sent and executed on the other replicas
         else if(msgOperationID == COMMIT && msgReplyCode == SUCCESS)
         {
+            //We set up a reply code for noticing that the msg should go to the client
+            sMsg->setReplyCode(SUCC_CLIENT);
             //We answer correctly to the requester through the invocation manager
             send(msg, "out", IM_OUT_GATE);
         }
@@ -154,7 +156,7 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
          }
      }
     //We receive an update message answer from the whole replicas, this is validated by the
-    //totally ordered when all multicasted messages  are ack!!
+    //totally ordered when all multicasted messages  are acked!!
      else if (gateID == gate("in",RU_IN_GATE)->getId())
      {
          //The multicast worked fine, and therefore we confirm our local write
@@ -208,6 +210,8 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                 //If it exists, and the message comes from MYSELF, it means it is a message from a remote update, and this is
                 //the message that i handle by myself so i wont write it again
                else if(msgReplicaID!= NO_REPLICA && msgReplicaID==replicaID && replica == msgReplicaOwnerID && replica== replicaID){
+                   //We need to send a reply code as success
+                   sMsg->setReplyCode(SUCCESS);
                    //We should send the message back as an answer to an internal multicast
                    send(msg, "out", IM_OUT_GATE);
                }
@@ -261,7 +265,23 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
          //time stamp of the read.
           else if(msgOperationID == READ)
           {
-              send(msg, "out", DIM_OUT_GATE);
+
+            //We need to check if the data item is owned by one of the replicas, or if it is the
+            //first time that it is created (locally) or in a remote replica that is sending us an update
+            int replica = -1;
+            try{
+                //checking if the data item with the given ID already exists in the system
+                replica =dataItemsOwners.at(msgDataID);
+                //we set up the replica owner
+                sMsg->setReplicaOwnerID(replica);
+                //We read the data item
+                send(msg, "out", DIM_OUT_GATE);
+            }
+            catch (const std::out_of_range& e)
+            {
+                throw cRuntimeError("REPLICA_WRITE_PROTOCOL:(1) The data item with id %s in the replica %d doesnt exist", msgDataID.c_str(),replicaID);
+            }
+
           }
      }
 

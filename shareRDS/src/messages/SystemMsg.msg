@@ -30,6 +30,7 @@ REINC=7;
 enum ReplyCodeType{
 FAIL=0;
 SUCCESS=1;
+SUCC_CLIENT=2;
 };
 //Message
 message SystemMsg {
