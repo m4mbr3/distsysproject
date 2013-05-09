@@ -23,9 +23,9 @@ simple ReplicaNetwork
     parameters:
         int replicaID = default(-1);		// ID of the owner of this network
         //Timers parameters
-		double processingTimerOffset = default(2.0);
+		double processingTimerOffset = default(1.0);
 		double sendingTimerOffset = default(3.0);
-		double checkAckTimerOfset = default(4.0);
+		double checkAckTimerOfset = default(12.0);
     gates:
         input inRemoteRequests[2];		// from RemoteWriteProtocol
         							// [0] for remoteWrite
