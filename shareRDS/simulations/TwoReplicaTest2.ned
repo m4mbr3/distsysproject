@@ -32,6 +32,9 @@ network TwoReplicaTest2
                 rID = 0;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
                 @display("p=140,58");
         }
         r1: Replica {
@@ -39,6 +42,9 @@ network TwoReplicaTest2
                 rID = 1;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
                 @display("p=140,195");
         }
         //Clients
@@ -51,7 +57,7 @@ network TwoReplicaTest2
                 operationOrder = "w";
                 dataItemsID = "a";
                 numberReplicas = nReplicas;
-
+				timerOffset = 3.0;
                 @display("p=43,107");
         }
                 //put a client
@@ -64,7 +70,7 @@ network TwoReplicaTest2
                 operationOrder = "r";
                 dataItemsID = "a";
                 numberReplicas = nReplicas;
-
+				timerOffset = 2.0;
                 @display("p=249,120");
         }
     connections allowunconnected:

@@ -91,7 +91,7 @@ void ReplicaNetwork::initialize()
     // schedule to process outQueue
     scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
 
-    caTimerOffset =  par("checkAckTimerOfset").doubleValue();
+    caTimerOffset =  par("checkAckTimerOffset").doubleValue();
     timeToCheckAcks = new cMessage("checkAcksTimer");
 }
 

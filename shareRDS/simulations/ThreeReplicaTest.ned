@@ -33,6 +33,9 @@ network ThreeReplicaTest
                 rID = 0;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
                 @display("p=178,58");
         }
         r1: Replica {
@@ -40,6 +43,9 @@ network ThreeReplicaTest
                 rID = 1;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
                 @display("p=258,150");
         }
         r2: Replica {
@@ -47,6 +53,9 @@ network ThreeReplicaTest
                 rID = 2;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
                 @display("p=178,270");
         }
         //put a client
@@ -59,7 +68,6 @@ network ThreeReplicaTest
                 operationOrder = "w r";
                 dataItemsID = "a a";
                 numberReplicas = nReplicas;
-
                 @display("p=82,138");
         }
     connections allowunconnected:

@@ -212,7 +212,7 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                 replica =dataItemsOwners.at(msgDataID);
                 //If it exists, and the message comes from another replica, then we check that
                 //actually the data items belong to the replica id in the message and then meaning that this is
-                //an update request
+                //an UPDATE REQUEST
                 if(msgReplicaID!= NO_REPLICA && msgReplicaID!=replicaID && replica == msgReplicaOwnerID && replica!= replicaID)
                 {
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
@@ -220,10 +220,16 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                 }
                 //If it exists, and the message comes from another replica, then we check that
                //actually the data items belong to the current replica id  and then meaning that this is
-               //a remote write request
+               //a REMOTE WRITE REQUEST
                 else if(msgReplicaID!= NO_REPLICA && msgReplicaID!=replicaID && replica == msgReplicaOwnerID && replica== replicaID){
+                    //log the write because the message will be send through the network, which can fail and therefore we must rollback the
+                    //the related executed writings
+                    sMsg->setOperation(UPDATE);
+                    send(msg,"out", WAP_OUT_GATE);
+                    /*OLD
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
                     send(msg, "out", DIM_OUT_GATE);
+                    */
                 }
                 //If it exists, and the message comes from MYSELF, it means it is a message from a remote update, and this is
                 //the message that i handle by myself so i wont write it again

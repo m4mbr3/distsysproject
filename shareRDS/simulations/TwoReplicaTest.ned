@@ -33,6 +33,9 @@ network TwoReplicaTest
                 rID = 0;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
                 @display("p=194,70");
         }
         r1: Replica {
@@ -40,6 +43,9 @@ network TwoReplicaTest
                 rID = 1;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
+                pTimerOffset = 1.0;
+                sTimerOffset = 2.0;
+                cTimerOffset = 10.0;
                 @display("p=194,177");
         }
         //put a client
