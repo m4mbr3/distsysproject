@@ -100,11 +100,12 @@ cMessage* AppMsgGenerator::getMessage(){
     if(op.compare("w") ==0)
     {
         sMsg->setOperation(WRITE);
+        //The color of the msg is red
         bubble("The client is writing");
     }
     else if (op.compare("r") ==0){
          sMsg->setOperation(READ);
-         //The package is blue
+         //The color of the msg is blue
          sMsg->setKind(2);
          bubble("The client is reading");
     }

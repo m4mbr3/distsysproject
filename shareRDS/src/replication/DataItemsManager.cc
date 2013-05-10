@@ -57,11 +57,15 @@ void DataItemsManager::handleMessage(cMessage *msg)
             data = dataItems.at(msgDataID);
             //putting the data on the answer msg
             sMsg->setData(data);
+            //We always answer a success answer because the Replica do not fail, so the operation require must execute successfully
+            sMsg->setReplyCode(SUCCESS);
         }
         //Something strange happens, because the data item does not exists
         catch (const std::out_of_range& e)
         {
-            throw cRuntimeError("DATAITEMS_MANAGER:(1) the data item wit id %s does not exists in replica id %d",sMsg->getDataID(), replicaID);
+            sMsg->setReplyCode(FAIL);
+
+            //throw cRuntimeError("DATAITEMS_MANAGER:(1) the data item wit id %s does not exists in replica id %d",sMsg->getDataID(), replicaID);
         }
     }
     //Setting up the answer in the message if the OPERATION is WRITING
@@ -70,16 +74,17 @@ void DataItemsManager::handleMessage(cMessage *msg)
         //Retrieving the data sent on the message
         int data = sMsg->getData();
         dataItems[msgDataID] = data;
+        //We always answer a success answer because the Replica do not fail, so the operation require must execute successfully
+        sMsg->setReplyCode(SUCCESS);
 
     }
     //Setting up the answer in the message if the OPERATION is DELETING
     else if(operation == DELETE){
 
         dataItems.erase(msgDataID);
-
+        //We always answer a success answer because the Replica do not fail, so the operation require must execute successfully
+         sMsg->setReplyCode(SUCCESS);
     }
-    //We always answer a success answer because the Replica do not fail, so the operation require must execute successfully
-     sMsg->setReplyCode(SUCCESS);
     //Sending the message to the dist. mutual exclusion component
     send(sMsg,"out");
 

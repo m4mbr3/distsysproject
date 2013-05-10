@@ -62,22 +62,23 @@ void WriteAheadLog::handleMessage(cMessage *msg)
    //update
    if(msgOperationID == UPDATE)
    {
-       versions.push_back(data);
+       dataItemsLog[msgDataID].push_back(data);
    }
    //commit
    if(msgOperationID == COMMIT)
    {
        dataItemsState[msgDataID]=true;
+       dataItemsLog[msgDataID].clear();
    }
    //rollback
    if(msgOperationID == ROLLBACK)
    {
        //we delete the last version
-       versions.pop_back();
+       dataItemsLog[msgDataID].pop_back();
        //We check if we are rolling back an update of a data item or a creation of the data item
-       int size = versions.size();
+       int size = dataItemsLog[msgDataID].size();
        if(size>0){
-           int oData=versions.back();
+           int oData=dataItemsLog[msgDataID].back();
            //we send back the old value
            sMsg->setData(oData);
        }

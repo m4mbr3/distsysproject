@@ -26,6 +26,7 @@ void Txc::initialize()
        {
            EV << "Sending the initial msg\n";
            cMessage *msg = new cMessage("tictocMsg");
+           msg->setKind(1);
            send(msg, "out");
        }
 }
@@ -35,8 +36,10 @@ void Txc::handleMessage(cMessage *msg)
     EV<< "Received message: " << msg->getName() << " sending it again";
     EV<< "\nMsg attributes: Timestamp:" << msg->getTimestamp() << " CreationTime:" << msg->getCreationTime() << " ArrivalTime:" << msg->getArrivalTime();
     // just send back the message we received
-    if(counter >0)
+    if(counter >0){
         send(msg, "out");
+        msg->setKind(1);
+    }
     if(counter == 3)
     {
         cMessage *msg = new cMessage("dull msg");
@@ -44,6 +47,7 @@ void Txc::handleMessage(cMessage *msg)
         EV<< "\nDull msg attributes: Timestamp:" << msg->getTimestamp() << " CreationTime:" << msg->getCreationTime() << " ArrivalTime:" << msg->getArrivalTime();
 
         send(msg, "out");
+        msg->setKind(2);
     }
     counter--;
 }
