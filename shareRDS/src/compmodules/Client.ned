@@ -12,34 +12,45 @@ import sharerds.recovery.WriteAheadLog;
 module Client
 {
     parameters:
-         int cID = default(-1);
-         int numberReplicas = default(1);
+        int cID = default(-1);
+        int numberReplicas = default(1);
 
+        @display("bgb=461,433");
     gates:
         input inReplicas[numberReplicas];
         input outReplicas[numberReplicas];
 
+    types:
+        channel Unnamed
+        {
+        }
+
     submodules:
-        ap: Application{
+        ap: Application {
             parameters:
 
-            }
-        im: InvocationManager{
+                @display("p=221,30");
+        }
+        im: InvocationManager {
             parameters:
 
+                @display("p=221,120");
         }
-        rgm: ReplicaGroupManager{
+        rgm: ReplicaGroupManager {
             parameters:
 
+                @display("p=221,199");
         }
-        whp: WriteAheadLog{
+        whp: WriteAheadLog {
             parameters:
 
+                @display("p=126,266");
         }
-        cr : ClientReincarnation{
+        cr: ClientReincarnation {
             parameters:
+                @display("p=297,266");
         }
-        cw: ClientNetwork{
+        cw: ClientNetwork {
             parameters:
             gates:
                 inReplicas[numberReplicas];
@@ -47,11 +58,17 @@ module Client
 
         }
 
+        basicNetwork: BasicNetwork {
+            @display("p=211,343;is=l");
+        }
+        clientNetwork: ClientNetwork {
+            @display("p=396,317");
+        }
     connections:
         //Application module and InvocationManager
         ap.out --> im.in[0];
         im.out[1] --> ap.in;
-        im.out[0] -->rgm.in[2];
+        im.out[0] --> rgm.in[2];
         rgm.out[0] --> whp.in;
         whp.out --> rgm.in[0];
         rgm.out[1] --> cr.in;
@@ -59,5 +76,11 @@ module Client
         //rgm.out[2] -->
 
         //TODO
+        rgm.out[0] --> basicNetwork.in[0];
+        basicNetwork.out[0] --> rgm.in[0];
+        basicNetwork.out[0] --> clientNetwork.inReplicas++;
+        clientNetwork.outReplicas++ --> basicNetwork.in[0];
+        im.out[0] --> clientNetwork.inReplicas++;
+        clientNetwork.outReplicas++ --> im.in[0];
 }
 
