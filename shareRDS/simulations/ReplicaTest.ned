@@ -38,8 +38,8 @@ network ReplicaTest
             parameters:
                 clientID = 0;
                 replicaId = 0;
-                operationOrder ="w w w r r r";
-                dataItemsID = "a b c a b c";
+                operationOrder ="w w r r";
+                dataItemsID = "a b b a";
                 numberReplicas = nReplicas;
                 @display("p=39,142");
         }

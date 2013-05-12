@@ -57,6 +57,7 @@ void ReplicaNetwork::initialize()
     WATCH(lamportClock);
 
     lcLastMsgSent = -1;
+    WATCH(lcLastMsgSent);
 
     timeToProcessRequest = new cMessage("processingRequestTimer");
 
