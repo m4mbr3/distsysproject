@@ -35,9 +35,30 @@ ReplicaNetwork::~ReplicaNetwork()
     //Cleaning up the maps
     msgsAck.clear();
     //This should have all the references should already be deleted
+    /*
+    std::map<long, SystemMsg*>::iterator it;
+    for (it = msgsWaitingForAck.begin(); it != msgsWaitingForAck.end(); it++)
+    {
+        SystemMsg* m = it->second;
+        delete m;
+    }
+    */
     msgsWaitingForAck.clear();
     //Cleaning up the vectors, the memory space pointed by the pointers should have been already emptied
+    //Cleaning the in queue
+    std::vector<SystemMsg*>::iterator it2;
+    for (it2 = inQueue.begin(); it2 != inQueue.end(); it2++)
+    {
+        SystemMsg* m = *it2;
+        delete m;
+    }
     inQueue.clear();
+    //Cleaning the out queue
+    for (it2 = outQueue.begin(); it2 != outQueue.end(); it2++)
+    {
+        SystemMsg* m = *it2;
+        delete m;
+    }
     outQueue.clear();
     //Cancelling and deleting the timers
     cancelAndDelete(timeToSendOutRequest);
@@ -71,7 +92,7 @@ void ReplicaNetwork::initialize()
     // schedule to process outQueue
     scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
 
-    caTimerOffset =  par("checkAckTimerOfset").doubleValue();
+    caTimerOffset =  par("checkAckTimerOffset").doubleValue();
     timeToCheckAcks = new cMessage("checkAcksTimer");
 }
 
@@ -203,14 +224,24 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     /**
                      * Multicast
                      */
+                    bubble("Multicasting");
                     //We multicast the messages, including ourselves
                     for (int i = 0; i< noOfReplicas; i++) {
                         //We send a duplicate of the current message
                         SystemMsg* outgoingMsg = sMsg->dup();
                         //We set up the reply code as -1, because we are waiting for an answer from a remote replica
                         outgoingMsg->setReplyCode(NO_REPLY_CODE);
+                        //Changing the color of the multicast msgs
+                        outgoingMsg->setKind(4);
+                        //Sending out the msg
                         send(outgoingMsg, "outReplicas",i);
                     }
+
+                    //Checking if the timer is already schedule
+                    if(timeToCheckAcks->isScheduled())
+                       {
+                           cancelEvent(timeToCheckAcks);
+                       }
                     //We schedule the timer for checking the state of the acks
                     if (timeToCheckAcks->isScheduled()) {
                         cancelEvent(timeToCheckAcks);
@@ -236,16 +267,24 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             else if (msgReplicaID!=NO_REPLICA && msgReplicaID != myReplicaID && msgReplicaOwnerID != myReplicaID  && gateID == findGate("inAnswer")) {
                 //We set up the operation as an ACK
                 sMsg->setOperation(ACK);
+                //We send a duplicate of the current message
+                SystemMsg* outgoingMsg = sMsg->dup();
+                //Changing the color of the multicast msgs
+                outgoingMsg->setKind(4);
                 //We send the msg to the owner of the data item that has requested the update of the variable
-                send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
+                send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
             //The msg is an answer of a RemoteUpdate request from the current replica and then we need to send it to the replicaOwnerID
             //In fact the replicaOwner on the message SHOULD be the same as the replica sender
             else if (msgReplicaID!=NO_REPLICA && msgReplicaID == myReplicaID && msgReplicaOwnerID == myReplicaID  && gateID == findGate("inAnswer") && msgReplyCode ==SUCCESS) {
                 //We set up the operation as an ACK
                 sMsg->setOperation(ACK);
+                //We send a duplicate of the current message
+                SystemMsg* outgoingMsg = sMsg->dup();
+                //Changing the color of the multicast msgs
+                outgoingMsg->setKind(4);
                 //We send the msg to the owner of the data item that has requested the update of the variable
-                send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
+                send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
             //We are processing a message that is an answer to a client request
            else {
@@ -281,13 +320,23 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 bool acki = acks[i];
                 // check if we already received the ACK or not, if not then we resend the request
                 //TODO how many times do we try?
+                /**
+                 * Retrying the acks not received
+                 */
                 if (!acki) { // false
                     okToSend = false;
                     //We update the lamport clock because an event is happening with the replica system
                    lamportClockHandle(m);
+                   //Outgoing msg
+                   SystemMsg* outgoingm= m->dup();
                    //Set up the new lamport clock of the message
-                   m->setLamportClock(lamportClock);
-                    send(m->dup(), "outReplicas", i);
+                   outgoingm->setLamportClock(lamportClock);
+                   //Set up the reply code as -1
+                   outgoingm->setReplyCode(NO_REPLY_CODE);
+                   //Put as another color the retry of a multicast
+                   outgoingm->setKind(5);
+                   //Sending the message again
+                   send(outgoingm, "outReplicas", i);
                 }
             }
             //If all acks has been received for the current message (msgID)
@@ -321,6 +370,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         }
         //While there are messages waiting for acks, we need to keep having a timer for checking the acks of that mesasge
         if (!msgsWaitingForAck.empty()) {
+            if(timeToCheckAcks->isScheduled())
+            {
+                cancelEvent(timeToCheckAcks);
+            }
             scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
         }
     }

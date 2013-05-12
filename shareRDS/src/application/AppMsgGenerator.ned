@@ -35,7 +35,8 @@ simple AppMsgGenerator
         //Defines the data items id, related to the operations define in operation order, SEPARATED BY WHITE SPACE
         string dataItemsID;
         //the time for the timer related to the sending of requests
-        double timerOffset= default(1.0);
+        double timerOffset = default(1.0);
+        @display("i=device/laptop");
     gates:
         input replicasIn[numberReplicas];
         output replicasOut[numberReplicas];

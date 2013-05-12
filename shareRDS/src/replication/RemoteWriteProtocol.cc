@@ -66,9 +66,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     {
         //We keep the operation WRITE
          sMsg->setOperation(WRITE);
-         //We set up the reply code as -1
-         sMsg->setReplyCode(NO_REPLY_CODE);
-
          //If it is an answer for a rollaback
         if(msgOperationID == ROLLBACK && msgReplyCode == SUCCESS)
         {
@@ -86,16 +83,24 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         //If the message through the network was successfully sent and executed on the other replicas
         else if(msgOperationID == COMMIT && msgReplyCode == SUCCESS)
         {
+            //We set up the reply code as -1
+            sMsg->setReplyCode(NO_REPLY_CODE);
+            //We write the data item in the replica
+            send(msg, "out", DIM_OUT_GATE);
+            /*OLD
             //We set up a reply code for noticing that the msg should go to the client
             sMsg->setReplyCode(SUCC_CLIENT);
             //We answer correctly to the requester through the invocation manager
             send(msg, "out", IM_OUT_GATE);
+            */
         }
         //If it was a request for logging a write request
         else if(msgOperationID == UPDATE && msgReplyCode == SUCCESS)
         {
             //We reflect the write in the local data items
-            send(msg, "out", DIM_OUT_GATE);
+            //send(msg, "out", DIM_OUT_GATE);
+            //We send the update to the other replicas because we are implementing a SYNCHRONOUS VERSION
+            send(msg,"out", RU_OUT_GATE);
         }
         //Something really bad happen :(, we rise an exception
         else if(msgReplyCode == FAIL){
@@ -109,6 +114,13 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         if(msgReplyCode == SUCCESS){
             //We write an owned data item
             if(msgReplicaOwnerID== replicaID && msgOperationID == WRITE){
+
+                //We set up a reply code for noticing that the msg should go to the client
+                sMsg->setReplyCode(SUCC_CLIENT);
+                //We answer correctly to the requester through the invocation manager
+                send(msg, "out", IM_OUT_GATE);
+
+                /*OLD
                 //We send the update to all the other replica by using multicasting
                 send(sMsg, "out", RU_OUT_GATE);
                 //We check if we need to answer a remote write request, the msg comes from another replica and i am the owner
@@ -116,6 +128,7 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                     //We send the answer to the remote write request through invocation manager
                     send(sMsg->dup(), "out", IM_OUT_GATE);
                 }
+                */
 
             }
             //We write locally and if the writing is from a data item that was written remotely on the owner replica and is requiring
@@ -134,8 +147,8 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         //if we couldnt read/write we rise and exception because the replica is assume to not fail
         else if(msgReplyCode == FAIL)
         {
-            //send(sMsg, "out", IM_OUT_GATE);
-            throw cRuntimeError("REPLICA_WRITE_PROTOCOL: (2) A strange error happens when logging a write request in the replica %d", replicaID);
+            send(sMsg, "out", IM_OUT_GATE);
+            //throw cRuntimeError("REPLICA_WRITE_PROTOCOL: (2) A strange error happens when logging a write request in the replica %d", replicaID);
         }
 
 
@@ -156,14 +169,19 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
          }
      }
     //We receive an update message answer from the whole replicas, this is validated by the
-    //totally ordered when all multicasted messages  are acked!!
+    //replica network module when all multicasted messages  are acked!!
      else if (gateID == gate("in",RU_IN_GATE)->getId())
      {
          //The multicast worked fine, and therefore we confirm our local write
          if(msgReplyCode == SUCCESS){
-             //We confirm the written done before multicasting
+             //We commit the data item and therefore it is finally written in the loca data items
              sMsg->setOperation(COMMIT);
              send(msg,"out", WAP_OUT_GATE);
+             //We check if we need to answer a remote write request, the msg comes from another replica and i am the owner
+            if(msgReplicaID != NO_REPLICA && msgReplicaID!= replicaID){
+                //We send the answer to the remote write request through invocation manager
+                send(sMsg->dup(), "out", IM_OUT_GATE);
+            }
          }
          //Something got bad on when multicasting the update, then we need to roll back our local write
          else if (msgReplyCode== FAIL)
@@ -194,7 +212,7 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                 replica =dataItemsOwners.at(msgDataID);
                 //If it exists, and the message comes from another replica, then we check that
                 //actually the data items belong to the replica id in the message and then meaning that this is
-                //an update
+                //an UPDATE REQUEST
                 if(msgReplicaID!= NO_REPLICA && msgReplicaID!=replicaID && replica == msgReplicaOwnerID && replica!= replicaID)
                 {
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
@@ -202,10 +220,16 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                 }
                 //If it exists, and the message comes from another replica, then we check that
                //actually the data items belong to the current replica id  and then meaning that this is
-               //a remote write
+               //a REMOTE WRITE REQUEST
                 else if(msgReplicaID!= NO_REPLICA && msgReplicaID!=replicaID && replica == msgReplicaOwnerID && replica== replicaID){
+                    //log the write because the message will be send through the network, which can fail and therefore we must rollback the
+                    //the related executed writings
+                    sMsg->setOperation(UPDATE);
+                    send(msg,"out", WAP_OUT_GATE);
+                    /*OLD
                     //We should execute such write MANDATORY, and because the replica does not fail the local write MUST not fail
                     send(msg, "out", DIM_OUT_GATE);
+                    */
                 }
                 //If it exists, and the message comes from MYSELF, it means it is a message from a remote update, and this is
                 //the message that i handle by myself so i wont write it again
@@ -245,6 +269,10 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                     dataItemsOwners[msgDataID] =replicaID;
                    //We update the owner field of the message
                    sMsg->setReplicaOwnerID(replicaID);
+                   //log the write because the message will be send through the network, which can fail and therefore we must rollback the
+                    //the related executed writings
+                    sMsg->setOperation(UPDATE);
+                    send(msg,"out", WAP_OUT_GATE);
                }
                 //if it is coming from an update from other replica that has written for the first time the data item
                //in its data items manager
@@ -253,12 +281,11 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                  {
                      //We relate the replica owner ID with the data item id
                      dataItemsOwners[msgDataID] =msgReplicaOwnerID;
+                     //We must write the data item without loggin it because we are not the owner
+                     send(msg, "out", DIM_OUT_GATE);
                  }
 
-               //log the write because the message will be send through the network, which can fail and therefore we must rollback the
-               //the related executed writings
-               sMsg->setOperation(UPDATE);
-               send(msg,"out", WAP_OUT_GATE);
+
             }
          }
          //if the request is a read, we read the current value locally the data items manager should check the
@@ -279,7 +306,10 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
             }
             catch (const std::out_of_range& e)
             {
-                throw cRuntimeError("REPLICA_WRITE_PROTOCOL:(1) The data item with id %s in the replica %d doesnt exist", msgDataID.c_str(),replicaID);
+                sMsg->setReplyCode(FAIL);
+                //We read the data item
+                send(msg, "out", IM_OUT_GATE);
+                //throw cRuntimeError("REPLICA_WRITE_PROTOCOL:(1) The data item with id %s in the replica %d doesnt exist", msgDataID.c_str(),replicaID);
             }
 
           }

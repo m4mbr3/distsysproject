@@ -100,9 +100,14 @@ cMessage* AppMsgGenerator::getMessage(){
     if(op.compare("w") ==0)
     {
         sMsg->setOperation(WRITE);
+        //The color of the msg is red
+        bubble("The client is writing");
     }
     else if (op.compare("r") ==0){
          sMsg->setOperation(READ);
+         //The color of the msg is blue
+         sMsg->setKind(2);
+         bubble("The client is reading");
     }
     //timestamp
     localClock++;
@@ -125,6 +130,7 @@ void AppMsgGenerator::handleMessage(cMessage *msg)
             send(m, "replicasOut", replicaID);
             //Scheduling another sending of the message
             scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
+
         }
     }
     else{

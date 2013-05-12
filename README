@@ -24,23 +24,41 @@ Vinh The Hoang
 =================
 +Creation and test of a network description file for testing the replica module (ReplicaTest.ned)
 	-Tests:
-		-Put one client and one replica : Doing random operations (create several data items): May 9th
+		+Put one client and one replica : Doing random operations (create several data items): May 9th
 		-Put two clients and one replica : Doing random operations: May 11th
 		-Put two clients and one replica: One always read, and the other one always writes
 		-Put two clients and one replica: Both writing
+-To fix the rejection of messages based on the lmsgsent only for replica msgs.
 =================
 Monica Lozano
 =================
 +Review the classes and build the destructors of each class
  + ReplicaNetwork
- 	-Fix the part that delete the pointers of each message saved in the maps:May 10th
+ 	+Fix the part that delete the pointers of each message saved in the maps:May 10th
+ 	-We need to fix the deletion of acks messages that are created by the replicas: May 11th
 +Creation and test of a network description file for testing the replica module (ReplicaTest.ned)
 +Creation and test of a ned for testing the remote write protocol (more than one replica)
 	-Tests:
-		-Put two clients and 2 replicas: For testing a remote write: May 10th
-		-Put one client and 3 replicas: This test the remote update and the multicast functionality
-- We need to manage the replication of messages in multicast messages : May 9th
-- We need to code the failure of the network (as self messages)
+		+ Put one client and 2 replicas: Multicast testing for writing, writing and reading the same data item at
+		the same time
+		+Put one client and 3 replicas: This test the remote update and the multicast functionality: May 10th
+		+Put two clients and 2 replicas: For testing a remote write: May 10th
+		  -Test it: May 11th
+-Creation of a simulation file that can parametrized the number of clients and replicas: May 11th
++Fixing the way of processing a remote write request, because it should first go to the logger and then should be multicasted,
+and when all the acks has been received the writting is committed locally and then the answer of the remote write request must be sent to
+remote replica that sent such request 
++Fix the reading in the remote write protocol when a value is really committed
+	+I have fixed the flow of the writting as a synch writting
+	+If there is a read of an uncommitted write, the read fails in the case of the data item doesnt exist or
+	returns the last written value before the current writting.
++Put as parameter of Replica.ned the timers for processing in and out queues, and the check acks timer: May 11th
++ We need to manage the replication of messages in multicast messages : May 9th - We will execute the write the number
+of times of a multicast is re-executed
++Changing the messages color (by read, write, multicast msg)in the graphical interface
++Putting some bubbles msgs on the graphical interface
+
+- We need to code the failure of the network (as self messages): May 18th
 -Files to delete: 
 	-LogManager .cc, .h, .ned
 	-BarkleySynch .cc, .h, .ned

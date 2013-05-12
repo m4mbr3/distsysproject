@@ -15,13 +15,12 @@
 
 package sharerds.simulations;
 
-
 import sharerds.compmodules.Replica;
 import sharerds.application.AppMsgGenerator;
 //
-// This files allow the simulation of the remote write protocol with TWO replicas and ONE client
+// TODO auto-generated type
 //
-network TwoReplicaTest
+network TwoReplicaTest2
 {
     parameters:
         int nReplicas = default(2);
@@ -36,37 +35,50 @@ network TwoReplicaTest
                 pTimerOffset = 2.0;
                 sTimerOffset = 3.0;
                 cTimerOffset = 14.0;
-                @display("p=194,70");
+                @display("p=140,58");
         }
         r1: Replica {
             parameters:
                 rID = 1;
                 numberReplicas = nReplicas;
                 numberClients = nClients;
-                pTimerOffset = 1.0;
-                sTimerOffset = 2.0;
-                cTimerOffset = 10.0;
-                @display("p=194,177");
+                pTimerOffset = 2.0;
+                sTimerOffset = 3.0;
+                cTimerOffset = 14.0;
+                @display("p=140,195");
         }
-        //put a client
-        client: AppMsgGenerator {
+        //Clients
+        c0: AppMsgGenerator {
             parameters:
                 clientID = 0;
                 //This client msgs are process by the replica with id 0
                 replicaId = 0;
                 //Writting and reading a set of data items in the initial connected replica
-                operationOrder ="w r";
-                dataItemsID = "a a";
+                operationOrder = "w";
+                dataItemsID = "a";
                 numberReplicas = nReplicas;
-
-                @display("p=82,138");
+				timerOffset = 3.0;
+                @display("p=43,107");
+        }
+                //put a client
+        c1: AppMsgGenerator {
+            parameters:
+                clientID = 1;
+                //This client msgs are process by the replica with id 0
+                replicaId = 0;
+                //Writting and reading a set of data items in the initial connected replica
+                operationOrder = "r";
+                dataItemsID = "a";
+                numberReplicas = nReplicas;
+				timerOffset = 2.0;
+                @display("p=249,120");
         }
     connections allowunconnected:
 
         //Connecting the self loops in each replica
         r0.outReplicas[0] --> r0.inReplicas[0];
         r1.outReplicas[1] --> r1.inReplicas[1];
-        
+
         //Connecting all the replicas to all the ones in the system
         //The channel to replica 1 from replica 0 goes through outReplica[1] of replica 0
         r0.outReplicas[1] --> r1.inReplicas[0];
@@ -74,9 +86,17 @@ network TwoReplicaTest
         r1.outReplicas[0] --> r0.inReplicas[1];
         //connecting the client to the replicas
         //Connecting the communication from the client to the replicas
-        client.replicasOut[0] --> r0.inClients[0];
-        client.replicasOut[1] --> r1.inClients[0];
+        //Connecting c0
+        c0.replicasOut[0] --> r0.inClients[0];
+        c0.replicasOut[1] --> r1.inClients[0];
+        //Connecting c1
+        c1.replicasOut[0] --> r0.inClients[1];
+        c1.replicasOut[1] --> r1.inClients[1];
 		//Connecting the communication form the replicas to the client
-        r0.outClients[0] --> client.replicasIn[0];
-        r1.outClients[0] --> client.replicasIn[1];
+		//to C0
+        r0.outClients[0] --> c0.replicasIn[0];
+        r1.outClients[0] --> c0.replicasIn[1];
+        //To C1
+        r0.outClients[1] --> c1.replicasIn[0];
+        r1.outClients[1] --> c1.replicasIn[1];
 }
