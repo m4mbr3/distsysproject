@@ -24,7 +24,7 @@ network TwoReplicaTest2
 {
     parameters:
         int nReplicas = default(2);
-        int nClients = default(1);
+        int nClients = default(2);
 
     submodules:
         r0: Replica {
@@ -34,7 +34,7 @@ network TwoReplicaTest2
                 numberClients = nClients;
                 pTimerOffset = 2.0;
                 sTimerOffset = 3.0;
-                cTimerOffset = 14.0;
+                cTimerOffset = 20.0;
                 @display("p=140,58");
         }
         r1: Replica {
@@ -57,7 +57,7 @@ network TwoReplicaTest2
                 operationOrder = "w";
                 dataItemsID = "a";
                 numberReplicas = nReplicas;
-				timerOffset = 3.0;
+				timerOffset = 1.0;
                 @display("p=43,107");
         }
                 //put a client
@@ -65,12 +65,12 @@ network TwoReplicaTest2
             parameters:
                 clientID = 1;
                 //This client msgs are process by the replica with id 0
-                replicaId = 0;
+                replicaId = 1;
                 //Writting and reading a set of data items in the initial connected replica
-                operationOrder = "r";
+                operationOrder = "w";
                 dataItemsID = "a";
                 numberReplicas = nReplicas;
-				timerOffset = 2.0;
+				timerOffset = 20.0;
                 @display("p=249,120");
         }
     connections allowunconnected:
