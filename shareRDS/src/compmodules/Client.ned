@@ -61,12 +61,12 @@ module Client
         }
 
         basicNetwork: BasicNetwork {
-            @display("p=192,323;is=l");
+            @display("p=193,329;is=l");
         }
         lamport: LamportClockClient {
-            @display("p=584,423");
+            @display("p=473,399");
         }
-        
+
     connections:
         //Application module and InvocationManager
         application.out --> invocationManager.in[0];
