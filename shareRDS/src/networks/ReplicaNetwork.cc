@@ -213,6 +213,8 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 if (msgReplyCode == SUCCESS) {
                     //We same the message as a message to which we will need to check the acks from the other replicas
                     msgsWaitingForAck[msgTreeID] = sMsg->dup();
+                    //We set up the sender of the message
+                    msgsWaitingForAck[msgTreeID]->setReplicaID(msgReplicaID);
                     //We initialize the state of the acks of the involved message
                     int noOfReplicas = gateSize("outReplicas");
                     std::vector<bool> temp(noOfReplicas);
