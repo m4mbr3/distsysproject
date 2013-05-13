@@ -39,7 +39,7 @@ void BasicNetwork::handleMessage(cMessage *msg)
             //i flush the table of the connections
             open_connections.clear();
         }
-        send(ttmsg, "out"+TO_LAMPORTCLOCK);
+        send(ttmsg, "out", TO_LAMPORTCLOCK);
     }
     else if ( gateID == gate ("in",FROM_CLIENTNETWORK)->getId()){
        /*
@@ -51,6 +51,6 @@ void BasicNetwork::handleMessage(cMessage *msg)
         */
     }
     else if ( gateID == gate("in",FROM_LAMPORTCLOCK)->getId()){
-        send(ttmsg, "out"+TO_CLIENTNETWORK);
+        send(ttmsg, "out", TO_CLIENTNETWORK);
     }
 }
