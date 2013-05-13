@@ -22,7 +22,7 @@ import sharerds.compmodules.Replica;
 network ClientTwoReplicaTest 
 {
     parameters:
-        int nReplicas = 4;
+        int nReplicas = 2;
         int nClients = 1;
         int numberReplicas = 4;
         int cID = 0;
@@ -39,7 +39,7 @@ network ClientTwoReplicaTest
         }
         replica: Replica {
             rID = 0;
-            numberReplicas = nReplicas-2;
+            numberReplicas = nReplicas;
             numberClients = nClients;
             pTimerOffset = 2.0;
             sTimerOffset = 3.0;
@@ -49,7 +49,7 @@ network ClientTwoReplicaTest
         }
         replica1: Replica {
             rID = 1;
-            numberReplicas = nReplicas-2;
+            numberReplicas = nReplicas;
             numberClients = nClients;
             pTimerOffset = 1.0;
             sTimerOffset = 2.0;

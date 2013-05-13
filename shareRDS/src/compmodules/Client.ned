@@ -20,8 +20,8 @@ module Client
 		int localClock = default(0);
         @display("bgb=1019,568");
     gates:
-        input inReplicas[numberReplicas];
-        output outReplicas[numberReplicas];
+        input inReplicas[numberReplicas+2];
+        output outReplicas[numberReplicas+2];
 
     types:
         channel Unnamed
@@ -44,7 +44,7 @@ module Client
                 clientID = clientID;
 				ReplicaIDs = ReplicaIDs;
 				replicaID = replicaID;
-				numberReplicas = numberReplicas;
+				numberReplicas = numberReplicas+2;
                 @display("p=221,199");
         }
         writeAhead: WriteAheadLog {
@@ -61,8 +61,8 @@ module Client
             parameters:
                 @display("p=299,474");
             gates:
-                inReplicas[numberReplicas];
-                outReplicas[numberReplicas];
+                inReplicas[numberReplicas+2];
+                outReplicas[numberReplicas+2];
 
         }
 
