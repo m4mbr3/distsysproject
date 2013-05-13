@@ -93,10 +93,11 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             SystemMsg* nextReincMSG = new SystemMsg();
             scheduleAt(simTime()+5.0, nextReincMSG);
             //}
+            std::cout << "REPLICAGROUPMANAGER I'm alive "  <<std::endl;
             dead = false;
         }
         else{
-            EV << "REPLICAGROUPMANAGER I'm dead "  <<endl;
+            std::cout << "REPLICAGROUPMANAGER I'm dead "  <<std::endl;
             dead = true;
         }
     }
