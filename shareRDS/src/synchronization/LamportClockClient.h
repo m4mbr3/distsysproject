@@ -21,9 +21,7 @@
 #define TO_CLIENTNETWORK 0
 #define FROM_BASICNETWORK 1
 #define TO_BASICNETWORK 1
-/**
- * TODO - Generated class
- */
+
 class LamportClockClient : public cSimpleModule
 {
     private:

@@ -7,6 +7,7 @@ import sharerds.failure.ClientReincarnation;
 import sharerds.networks.ClientNetwork;
 import sharerds.networks.BasicNetwork;
 import sharerds.recovery.WriteAheadLog;
+import sharerds.synchronization.LamportClockClient;
 
 
 module Client
@@ -15,7 +16,7 @@ module Client
         int cID = default(-1);
         int numberReplicas = default(1);
 
-        @display("bgb=461,433");
+        @display("bgb=1019,568");
     gates:
         input inReplicas[numberReplicas];
         input outReplicas[numberReplicas];
@@ -26,32 +27,33 @@ module Client
         }
 
     submodules:
-        ap: Application {
+        application: Application {
             parameters:
 
-                @display("p=221,30");
+                @display("p=175,28");
         }
-        im: InvocationManager {
+        invocationManager: InvocationManager {
             parameters:
 
                 @display("p=221,120");
         }
-        rgm: ReplicaGroupManager {
+        replicaGroupManager: ReplicaGroupManager {
             parameters:
 
                 @display("p=221,199");
         }
-        whp: WriteAheadLog {
+        writeAhead: WriteAheadLog {
             parameters:
 
                 @display("p=126,266");
         }
-        cr: ClientReincarnation {
+        clientReincarnation: ClientReincarnation {
             parameters:
                 @display("p=297,266");
         }
-        cw: ClientNetwork {
+        clientNetwork: ClientNetwork {
             parameters:
+                @display("p=299,474");
             gates:
                 inReplicas[numberReplicas];
                 outReplicas[numberReplicas];
@@ -59,28 +61,28 @@ module Client
         }
 
         basicNetwork: BasicNetwork {
-            @display("p=211,343;is=l");
+            @display("p=192,323;is=l");
         }
-        clientNetwork: ClientNetwork {
-            @display("p=396,317");
+        lamport: LamportClockClient {
+            @display("p=584,423");
         }
+        
     connections:
         //Application module and InvocationManager
-        ap.out --> im.in[0];
-        im.out[1] --> ap.in;
-        im.out[0] --> rgm.in[2];
-        rgm.out[0] --> whp.in;
-        whp.out --> rgm.in[0];
-        rgm.out[1] --> cr.in;
-        cr.out --> rgm.in[1];
-        //rgm.out[2] -->
-
-        //TODO
-        rgm.out[0] --> basicNetwork.in[0];
-        basicNetwork.out[0] --> rgm.in[0];
-        basicNetwork.out[0] --> clientNetwork.inReplicas++;
-        clientNetwork.outReplicas++ --> basicNetwork.in[0];
-        im.out[0] --> clientNetwork.inReplicas++;
-        clientNetwork.outReplicas++ --> im.in[0];
+        application.out --> invocationManager.in[0];
+        invocationManager.out[1] --> application.in;
+        invocationManager.out[0] --> replicaGroupManager.in[2];
+        replicaGroupManager.out[0] --> writeAhead.in;
+        writeAhead.out --> replicaGroupManager.in[0];
+        replicaGroupManager.out[1] --> clientReincarnation.in;
+        clientReincarnation.out --> replicaGroupManager.in[1];
+        replicaGroupManager.out[2] --> basicNetwork.in[0];
+        basicNetwork.out[0] --> invocationManager.in[1];
+        clientNetwork.outReplicas[1] --> basicNetwork.in[1];
+        basicNetwork.out[1] --> clientNetwork.inReplicas[1];
+        clientNetwork.outReplicas[0] --> lamport.in[0];
+        lamport.out[0] --> clientNetwork.inReplicas[0];
+        lamport.out[1] --> basicNetwork.in[1];
+        basicNetwork.out[1] --> lamport.in[1];
 }
 
