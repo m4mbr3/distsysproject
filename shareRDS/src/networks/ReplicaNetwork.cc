@@ -384,6 +384,9 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         lamportClockHandle(sMsg);
         int msgLamportClk = sMsg->getLamportClock();
         int msgGateID = sMsg->getArrivalGateId();
+        int msgClientID = sMsg->getClientID();
+        int msgReplicaID = sMsg->getReplicaID();
+        int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
 
         //Messages outgoing from the replica
         if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
@@ -393,6 +396,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             sMsg->setLamportClock(lamportClock);
             //We save a duplication of the message such that we have the memory control in the current replica
             outQueue.push_back(sMsg->dup());
+        }
+        //Message comes from a client to a replica
+        //TODO: add logic here
+        else if ((msgClientID != -1) && (msgReplicaID == -1) && (msgReplicaOwnerID == -1)) {
+            inQueue.push_back(sMsg->dup());
+            orderInQueue();
         }
         //Messages incoming to the replica
         else {
