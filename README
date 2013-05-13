@@ -23,11 +23,11 @@ Andrea Mambretti
 Vinh The Hoang
 =================
 +Creation and test of a network description file for testing the replica module (ReplicaTest.ned)
-	-Tests:
+	+Tests: The results of the test shows that I will need to fix the rejection of messages based on lmsgsent, and also reconsider the msg flow.
 		+Put one client and one replica : Doing random operations (create several data items): May 9th
-		-Put two clients and one replica : Doing random operations: May 11th
-		-Put two clients and one replica: One always read, and the other one always writes
-		-Put two clients and one replica: Both writing
+		+Put two clients and one replica : Doing random operations: May 11th
+		+Put two clients and one replica: One always read, and the other one always writes
+		+Put two clients and one replica: Both writing
 -To fix the rejection of messages based on the lmsgsent only for replica msgs.
 =================
 Monica Lozano
