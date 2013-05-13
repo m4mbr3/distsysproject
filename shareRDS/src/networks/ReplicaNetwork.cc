@@ -78,6 +78,7 @@ void ReplicaNetwork::initialize()
     WATCH(lamportClock);
 
     lcLastMsgSent = -1;
+    WATCH(lcLastMsgSent);
 
     timeToProcessRequest = new cMessage("processingRequestTimer");
 
@@ -242,7 +243,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                            cancelEvent(timeToCheckAcks);
                        }
                     //We schedule the timer for checking the state of the acks
-                    scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
+                    if (timeToCheckAcks->isScheduled()) {
+                        cancelEvent(timeToCheckAcks);
+                    }
+                    else {
+                        scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
+                    }
                 }
             }
             //We need to send a request for a write request to the owner of the data item (a remote replica)
@@ -378,6 +384,9 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         lamportClockHandle(sMsg);
         int msgLamportClk = sMsg->getLamportClock();
         int msgGateID = sMsg->getArrivalGateId();
+        int msgClientID = sMsg->getClientID();
+        int msgReplicaID = sMsg->getReplicaID();
+        int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
 
         //Messages outgoing from the replica
         if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
@@ -387,6 +396,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             sMsg->setLamportClock(lamportClock);
             //We save a duplication of the message such that we have the memory control in the current replica
             outQueue.push_back(sMsg->dup());
+        }
+        //Message comes from a client to a replica
+        //TODO: add logic here
+        else if ((msgClientID != -1) && (msgReplicaID == -1) && (msgReplicaOwnerID == -1)) {
+            inQueue.push_back(sMsg->dup());
+            orderInQueue();
         }
         //Messages incoming to the replica
         else {

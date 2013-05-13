@@ -18,7 +18,7 @@ package sharerds.networks;
 simple BasicNetwork
 {
     parameters:
-        int clientID = default(-1);
+        int clientID = default (-1);
     gates:
         input in[3];
         output out[3];

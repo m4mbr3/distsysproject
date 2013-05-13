@@ -1,10 +1,11 @@
 #include "Application.h"
-
-
+#include <stdlib.h>
+#include <string>
+#include <stdio.h>
 Define_Module(Application);
 void Application::initialize()
 {
-    setClientID(par("clientID"));
+    setClientID((int)par("clientID"));
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
     ttmsg = new SystemMsg();
@@ -41,6 +42,9 @@ void Application::handleMessage(cMessage *msg)
         delete ttmsg;
     }
 }
+
+
+
 SystemMsg* Application::generateMessage(){
     //This is the function that generates random messages to replica
 
@@ -48,8 +52,9 @@ SystemMsg* Application::generateMessage(){
     ttmsg->setClientID(clientID);
     ttmsg->setOperation(intuniform(0,1));
     ttmsg->setData(intuniform(-1000, 1000));
-    ttmsg->setDataID(((intuniform(0,100)%2)==0) ?(const char *) 'a' + rand() % (('z'-'a') + 1): (const char *)'A' + rand() % (('Z'-'A') + 1));
-
+    //ttmsg->setDataID(((intuniform(0,100)%2)==0) ?(const char *) 'a' + rand() % (('z'-'a') + 1): (const char *)'A' + rand() % (('Z'-'A') + 1));
+    char buffer[33];
+    ttmsg->setDataID((intuniform(0,100)%2) == 0 ? itoa((intuniform(0,25)+'a'),buffer,10): itoa((intuniform(0,25)+'A'),buffer,10));
     return ttmsg;
 }
 int Application::getClientID()
@@ -58,6 +63,6 @@ int Application::getClientID()
 }
 void Application::setClientID(int clientID)
 {
-    clientID = clientID;
+    Application::clientID = clientID;
 }
 
