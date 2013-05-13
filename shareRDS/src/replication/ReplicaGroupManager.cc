@@ -62,7 +62,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
     if ( ttmsg->isSelfMessage()){
         //In this piece of code i send one reincarnation message and then i schedule the next one
         if(reincCounter < ReplicaIDs.size()){
-            send(generateReincarnationMessage(ReplicaIDs.at(reincCounter), this->clientID),"out"+TO_NETWORK);// i send messages to all my connected replica.
+            send(generateReincarnationMessage(ReplicaIDs.at(reincCounter), clientID),"out", TO_NETWORK);// i send messages to all my connected replica.
             reincCounter++;
             scheduleAt(simTime()+5.0, ttmsg);
         }
@@ -88,7 +88,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             reincCounter = 0;
 
             //for (i=0;i<ReplicaGroupManager::ReplicaIDs.length();i++){
-            send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(reincCounter), clientID),"out"+TO_NETWORK);// i send messages to all my connected replica.
+            send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(reincCounter), clientID),"out",TO_NETWORK);// i send messages to all my connected replica.
             reincCounter++;
             SystemMsg* nextReincMSG = new SystemMsg();
             scheduleAt(simTime()+5.0, nextReincMSG);
@@ -106,7 +106,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         //I'll forward directly to the WriteAheadProtocol
         //to log it
         if (!dead){
-            int res_oracle = intuniform(0,ReplicaIDs.size());
+            int res_oracle = intuniform(0,ReplicaIDs.size()-1);
             ttmsg->setReplicaID(ReplicaIDs.at(res_oracle));
             send(ttmsg,"out", TO_WRITEAHEADPROTOCOL);
         }
