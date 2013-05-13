@@ -35,6 +35,7 @@ network TwoClientsOneRep
                 operationOrder ="w r";
                 dataItemsID = "a b";
                 numberReplicas = nReplicas;
+                timerOffset = 10.0;
 	            @display("p=48,38");
         }
         client1: AppMsgGenerator {
@@ -46,6 +47,7 @@ network TwoClientsOneRep
                 operationOrder ="w r";
                 dataItemsID = "b a";
                 numberReplicas = nReplicas;
+                timerOffset = 10.0;
            	 	@display("p=48,162");
         }
         replica: Replica {
