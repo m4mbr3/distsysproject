@@ -100,6 +100,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             std::cout << "REPLICAGROUPMANAGER I'm dead "  <<std::endl;
             dead = true;
         }
+        delete ttmsg;
     }
     else if (gateID == gate("in", FROM_INVOCATIONMANAGER)->getId()){
         //I put a valid ReplicaID

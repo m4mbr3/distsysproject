@@ -46,9 +46,8 @@ void BasicNetwork::handleMessage(cMessage *msg)
         auto result = std::find(open_connections.begin(), open_connections.end(), std::pair<int, int>(ttmsg->getReplicaID(),ttmsg->getDataID()));
         if ( result != open_connections.end()){
             open_connections.erase(result);
-        }
-        send(ttmsg, "out"+TO_INVOCATIONMANAGER);
-        */
+        }*/
+        send(ttmsg, "out",TO_INVOCATIONMANAGER);
     }
     else if ( gateID == gate("in",FROM_LAMPORTCLOCK)->getId()){
         send(ttmsg, "out", TO_CLIENTNETWORK);
