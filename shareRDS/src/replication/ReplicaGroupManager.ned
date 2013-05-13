@@ -21,11 +21,13 @@ package sharerds.replication;
 simple ReplicaGroupManager
 {
     parameters:
+       string ReplicaIDs;
        //The number of replicas managed, the IDs of the replicas
        //should be from 0 to numberReplicas
-       int numberReplicas= default(1);
+       int numberReplicas;
        //The replica ID where the Manager is running
-       int replicaID = default(-1);
+       int replicaID;
+       int clientID;
     gates:
        //in[0] is the writeAheadProtocol module
        //in[1] is the client reincarnation module

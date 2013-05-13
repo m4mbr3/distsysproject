@@ -29,13 +29,13 @@ module Replica
         int numberReplicas = default(1);
         //the total number of clients in the system
         int numberClients = default(1);
-         //Timers parameters
-		double pTimerOffset = default(2.0);
-		double sTimerOffset = default(3.0);
-		double cTimerOffset = default(14.0);
+        //Timers parameters
+        double pTimerOffset = default(2.0);
+        double sTimerOffset = default(3.0);
+        double cTimerOffset = default(14.0);
 		//Display parameters
-        @display("i=block/buffer2");
-        
+        @display("i=block/buffer2;bgb=321,354");
+
     gates:
         //For receiving the requests coming from the clients of the simulation
         input inClients[numberClients];
@@ -75,8 +75,8 @@ module Replica
             parameters:
                 replicaID = rID;
                 processingTimerOffset = pTimerOffset;
-				sendingTimerOffset = sTimerOffset;
-				checkAckTimerOffset = cTimerOffset;
+                sendingTimerOffset = sTimerOffset;
+                checkAckTimerOffset = cTimerOffset;
                 @display("p=99,216;i=block/broadcast");
             gates:
                 inClients[numberClients];

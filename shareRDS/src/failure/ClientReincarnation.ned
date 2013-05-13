@@ -21,7 +21,7 @@ package sharerds.failure;
 simple ClientReincarnation
 {
     parameters:
-        int clientID =default(-1);
+        int clientID = default(-1);
     gates:
         input in;
         output out;

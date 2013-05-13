@@ -23,6 +23,7 @@ simple InvocationManager
     parameters:
         // the id of the current compound module where this module is installed (in the case of the client is the Client ID, and in the case of the replica is the replica ID)
         int entityID = default(-1);
+        
     gates:
         //Input gate 0 for receiving requests from the application (in the case of the client) or from a replica (only applies to replicas)
         //Input gate 1 for receiving the answers from request sent in the compound module to which this module is installed the answer are related

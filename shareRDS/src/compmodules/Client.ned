@@ -7,57 +7,95 @@ import sharerds.failure.ClientReincarnation;
 import sharerds.networks.ClientNetwork;
 import sharerds.networks.BasicNetwork;
 import sharerds.recovery.WriteAheadLog;
+import sharerds.synchronization.LamportClockClient;
 
 
 module Client
 {
     parameters:
-         int cID = default(-1);
-         int numberReplicas = default(1);
-
+        int clientID = default (-1);
+        int numberReplicas = default (2);
+		string ReplicaIDs;
+		int replicaID = default(0);
+		int localClock = default(0);
+        @display("bgb=1019,568");
     gates:
         input inReplicas[numberReplicas];
-        input outReplicas[numberReplicas];
+        output outReplicas[numberReplicas];
+
+    types:
+        channel Unnamed
+        {
+        }
 
     submodules:
-        ap: Application{
+        application: Application {
             parameters:
-
-            }
-        im: InvocationManager{
-            parameters:
-
+                clientID = clientID;
+                @display("p=175,28");
         }
-        rgm: ReplicaGroupManager{
+        invocationManager: InvocationManager {
             parameters:
-
+				entityID = clientID;
+                @display("p=221,120");
         }
-        whp: WriteAheadLog{
+        replicaGroupManager: ReplicaGroupManager {
             parameters:
-
+                clientID = clientID;
+				ReplicaIDs = ReplicaIDs;
+				replicaID = replicaID;
+				numberReplicas = numberReplicas;
+                @display("p=221,199");
         }
-        cr : ClientReincarnation{
+        writeAhead: WriteAheadLog {
             parameters:
+				replicaID = clientID;
+                @display("p=126,266");
         }
-        cw: ClientNetwork{
+        clientReincarnation: ClientReincarnation {
             parameters:
+                clientID  = clientID;
+                @display("p=297,266");
+        }
+        clientNetwork: ClientNetwork {
+            parameters:
+                @display("p=299,474");
             gates:
                 inReplicas[numberReplicas];
                 outReplicas[numberReplicas];
 
         }
 
-    connections:
-        //Application module and InvocationManager
-        ap.out --> im.in[0];
-        im.out[1] --> ap.in;
-        im.out[0] -->rgm.in[2];
-        rgm.out[0] --> whp.in;
-        whp.out --> rgm.in[0];
-        rgm.out[1] --> cr.in;
-        cr.out --> rgm.in[1];
-        //rgm.out[2] -->
+        basicNetwork: BasicNetwork {
+            @display("p=193,329;is=l");
+        }
+        lamport: LamportClockClient {
+            localClock = localClock;
+            @display("p=473,399");
+        }
 
-        //TODO
+    connections allowunconnected:
+        //Application module and InvocationManager
+        application.out --> invocationManager.in[0];
+        invocationManager.out[1] --> application.in;
+        invocationManager.out[0] --> replicaGroupManager.in[2];
+        replicaGroupManager.out[0] --> writeAhead.in;
+        writeAhead.out --> replicaGroupManager.in[0];
+        replicaGroupManager.out[1] --> clientReincarnation.in;
+        clientReincarnation.out --> replicaGroupManager.in[1];
+        replicaGroupManager.out[2] --> basicNetwork.in[0];
+        basicNetwork.out[0] --> invocationManager.in[1];
+        clientNetwork.outReplicas[1] --> basicNetwork.in[1];
+        basicNetwork.out[1] --> clientNetwork.inReplicas[1];
+        clientNetwork.outReplicas[0] --> lamport.in[0];
+        lamport.out[0] --> clientNetwork.inReplicas[0];
+        lamport.out[1] --> basicNetwork.in[2];
+        basicNetwork.out[2] --> lamport.in[1];
+        for i=2..sizeof(inReplicas)-1 {
+            inReplicas[i-2] --> clientNetwork.inReplicas[i];
+        }
+        for i=2..sizeof(outReplicas)-1 {
+        	clientNetwork.outReplicas[i] --> outReplicas[i-2]; 
+        }
 }
 

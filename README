@@ -13,12 +13,24 @@ Finished task hast the symbol "+" in front of the task description.
 =================
 Andrea Mambretti
 =================
-+Implement application simple module generating random and continuos calls to the application simulated
-+Implement client reincarnation
--Create the client compound module (Client.ned) using the application module,invocation manager module failure module, network module. This file should be saved in the folder src>compmodules
--Create network simulation file for simulating client failures.
--Implement the client network module because it should be different from the replica one, it should be located on network folder of the project.
++Implement client module generating random and continuos calls to the application simulated
+                                                                                                    | TESTED
+    + Application                                                                                   |  not yet
+    + Invocation Manager                                                                            |  not yet
+    + ReplicaGroupManager                                                                           |  not yet
+    + WriteAheadProtocol                                                                            |  not yet
+    + ClientReincarnation                                                                           |  not yet
+    + BasicNetwork  <-----------                                                                    |  not yet
+                                |--------Changed a little bit the topology from the first design.   |  
+    + ClientNetwork <-----------                                                                    |  not yet
+    + LamportClockClient                                                                            |  not yet
 
++Implement client reincarnation
++Create the client compound module (Client.ned) using the application module,invocation manager module failure module, network module. This file should be saved in the folder src>compmodules
+-Create network simulation file for simulating client failures.
++Implement the client network module because it should be different from the replica one, it should be located on network folder of the project.
+    -Tests:
+        - See if all the components behave correctly
 =================
 Vinh The Hoang
 =================
