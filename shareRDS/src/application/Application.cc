@@ -9,7 +9,7 @@ void Application::initialize()
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
     ttmsg = new SystemMsg();
-    scheduleAt(3.0, ttmsg);
+    scheduleAt(simTime()+3.0, ttmsg);
 }
 
 void Application::handleMessage(cMessage *msg)
@@ -17,7 +17,7 @@ void Application::handleMessage(cMessage *msg)
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
     if (ttmsg->isSelfMessage()){
         // I received a message from myself
-        scheduleAt(intuniform(4,20), ttmsg);
+        scheduleAt(intuniform(4,20)+simTime(), ttmsg);
         SystemMsg *msgGen = Application::generateMessage();
         send (msgGen, "out");
     }

@@ -108,7 +108,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         if (!dead){
             int res_oracle = intuniform(0,ReplicaIDs.size());
             ttmsg->setReplicaID(ReplicaIDs.at(res_oracle));
-            send(ttmsg,"out"+ TO_WRITEAHEADPROTOCOL);
+            send(ttmsg,"out", TO_WRITEAHEADPROTOCOL);
         }
         else{
             delete ttmsg;
