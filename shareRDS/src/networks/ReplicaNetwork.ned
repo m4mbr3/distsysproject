@@ -23,7 +23,7 @@ simple ReplicaNetwork
     parameters:
         int replicaID = default(-1);		// ID of the owner of this network
         //Timers parameters
-		double processingTimerOffset = default(2.0);
+		double processingTimerOffset = default(1.0);
 		double sendingTimerOffset = default(3.0);
 		double checkAckTimerOffset = default(10.0);
     gates:

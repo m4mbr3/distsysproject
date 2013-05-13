@@ -78,6 +78,7 @@ void ReplicaNetwork::initialize()
     WATCH(lamportClock);
 
     lcLastMsgSent = -1;
+    WATCH(lcLastMsgSent);
 
     timeToProcessRequest = new cMessage("processingRequestTimer");
 
@@ -242,7 +243,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                            cancelEvent(timeToCheckAcks);
                        }
                     //We schedule the timer for checking the state of the acks
-                    scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
+                    if (timeToCheckAcks->isScheduled()) {
+                        cancelEvent(timeToCheckAcks);
+                    }
+                    else {
+                        scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
+                    }
                 }
             }
             //We need to send a request for a write request to the owner of the data item (a remote replica)
