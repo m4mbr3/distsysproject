@@ -114,9 +114,17 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         if(msgReplyCode == SUCCESS){
             //We write an owned data item
             if(msgReplicaOwnerID== replicaID && msgOperationID == WRITE){
-
-                //We set up a reply code for noticing that the msg should go to the client
-                sMsg->setReplyCode(SUCC_CLIENT);
+                //We check if we need to answer a remote write request, the msg comes from another replica and i am the owner
+                  if(msgReplicaID != NO_REPLICA && msgReplicaID!= replicaID){
+                      //We set up a reply code for noticing that the msg should go to the client
+                      sMsg->setReplyCode(SUCCESS);
+                      //We set up the replica code to -1
+                      //sMsg->setReplicaOwnerID(NO_REPLY_CODE);
+                  }
+                  else{
+                      //We set up a reply code for noticing that the msg should go to the client
+                      sMsg->setReplyCode(SUCC_CLIENT);
+                  }
                 //We answer correctly to the requester through the invocation manager
                 send(msg, "out", IM_OUT_GATE);
 
@@ -155,18 +163,7 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     }
     //We receive an answer from a replica to which we requested a remote write
      else if(gateID== gate("in",RW_IN_GATE)->getId()){
-         //if the remote write or update succeed
-         if(msgReplyCode == SUCCESS)
-         {
-             //We write locally
-             send(msg, "out", DIM_OUT_GATE);
-         }
-         //The remote write failed because something bad happen during the communication
-         else if (msgReplyCode== FAIL)
-         {
-             //We send the failure message to the client using the invocation manager
              send(sMsg, "out", IM_OUT_GATE);
-         }
      }
     //We receive an update message answer from the whole replicas, this is validated by the
     //replica network module when all multicasted messages  are acked!!
@@ -177,11 +174,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
              //We commit the data item and therefore it is finally written in the loca data items
              sMsg->setOperation(COMMIT);
              send(msg,"out", WAP_OUT_GATE);
-             //We check if we need to answer a remote write request, the msg comes from another replica and i am the owner
-            if(msgReplicaID != NO_REPLICA && msgReplicaID!= replicaID){
-                //We send the answer to the remote write request through invocation manager
-                send(sMsg->dup(), "out", IM_OUT_GATE);
-            }
          }
          //Something got bad on when multicasting the update, then we need to roll back our local write
          else if (msgReplyCode== FAIL)
