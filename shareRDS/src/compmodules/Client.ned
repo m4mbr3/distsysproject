@@ -13,13 +13,15 @@ import sharerds.synchronization.LamportClockClient;
 module Client
 {
     parameters:
-        int cID = default(-1);
-        int numberReplicas = default(1);
-
+        int clientID = default (-1);
+        int numberReplicas = default (2);
+		string ReplicaIDs;
+		int replicaID = default(0);
+		int localClock = default(0);
         @display("bgb=1019,568");
     gates:
         input inReplicas[numberReplicas];
-        input outReplicas[numberReplicas];
+        output outReplicas[numberReplicas];
 
     types:
         channel Unnamed
@@ -29,26 +31,30 @@ module Client
     submodules:
         application: Application {
             parameters:
-
+                clientID = clientID;
                 @display("p=175,28");
         }
         invocationManager: InvocationManager {
             parameters:
-
+				entityID = clientID;
                 @display("p=221,120");
         }
         replicaGroupManager: ReplicaGroupManager {
             parameters:
-
+                clientID = clientID;
+				ReplicaIDs = ReplicaIDs;
+				replicaID = replicaID;
+				numberReplicas = numberReplicas;
                 @display("p=221,199");
         }
         writeAhead: WriteAheadLog {
             parameters:
-
+				replicaID = clientID;
                 @display("p=126,266");
         }
         clientReincarnation: ClientReincarnation {
             parameters:
+                clientID  = clientID;
                 @display("p=297,266");
         }
         clientNetwork: ClientNetwork {
@@ -64,10 +70,11 @@ module Client
             @display("p=193,329;is=l");
         }
         lamport: LamportClockClient {
+            localClock = localClock;
             @display("p=473,399");
         }
 
-    connections:
+    connections allowunconnected:
         //Application module and InvocationManager
         application.out --> invocationManager.in[0];
         invocationManager.out[1] --> application.in;
@@ -82,7 +89,13 @@ module Client
         basicNetwork.out[1] --> clientNetwork.inReplicas[1];
         clientNetwork.outReplicas[0] --> lamport.in[0];
         lamport.out[0] --> clientNetwork.inReplicas[0];
-        lamport.out[1] --> basicNetwork.in[1];
-        basicNetwork.out[1] --> lamport.in[1];
+        lamport.out[1] --> basicNetwork.in[2];
+        basicNetwork.out[2] --> lamport.in[1];
+        for i=2..sizeof(inReplicas)-1 {
+            inReplicas[i-2] --> clientNetwork.inReplicas[i];
+        }
+        for i=2..sizeof(outReplicas)-1 {
+        	clientNetwork.outReplicas[i] --> outReplicas[i-2]; 
+        }
 }
 
