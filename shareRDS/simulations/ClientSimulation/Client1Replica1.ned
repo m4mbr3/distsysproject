@@ -13,23 +13,30 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package sharerds.simulations;
+package sharerds.simulations.ClientSimulation;
 
 import sharerds.compmodules.Client;
 import sharerds.compmodules.Replica;
+import sharerds.invocation.InvocationManager;
+import sharerds.replication.*;
+import sharerds.recovery.WriteAheadLog;
+import sharerds.networks.ReplicaNetwork;
 
 
-network ClientTwoReplicaTest
+//
+// TODO documentation
+//
+network Network
 {
     parameters:
-        int nReplicas = 2;
+        int nReplicas = 1;
         int nClients = 1;
-        int numberReplicas = 2;
+        int numberReplicas = 1;
         int cID = 0;
-        string ReplicaIDs = "0 1";
+        string ReplicaIDs = "0";
         int localClock = 0;
-        @display("bgb=918,444;bgl=2");
     submodules:
+        
         client: Client {
             clientID = cID;
             ReplicaIDs = ReplicaIDs;
@@ -37,6 +44,7 @@ network ClientTwoReplicaTest
             localClock = localClock;
             @display("p=388,192");
         }
+        
         replica: Replica {
             rID = 0;
             numberReplicas = nReplicas;
@@ -47,25 +55,9 @@ network ClientTwoReplicaTest
             @display("p=194,70");
             @display("p=736,171");
         }
-        replica1: Replica {
-            rID = 1;
-            numberReplicas = nReplicas;
-            numberClients = nClients;
-            pTimerOffset = 1.0;
-            sTimerOffset = 2.0;
-            cTimerOffset = 10.0;
-            @display("p=747,325");
-        }
-    connections allowunconnected:
-
-      //  replica.outReplicas[1] --> replica.inReplicas[1];
-       // replica1.outReplicas[1] --> replica1.inReplicas[1];
-
-       // replica.outReplicas[1] --> replica1.inReplicas[1];
-       // replica1.outReplicas[1] --> replica.inReplicas[1];
-
+        connections allowunconnected:
         replica.outClients[0] --> client.inReplicas[0];
-        replica1.outClients[0] --> client.inReplicas[1];
         client.outReplicas[0] --> replica.inClients[0];
-        client.outReplicas[1] --> replica1.inClients[0];
+        
 }
+
