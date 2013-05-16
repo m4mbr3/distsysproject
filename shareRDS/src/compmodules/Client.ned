@@ -18,6 +18,7 @@ module Client
         string ReplicaIDs;
         int replicaID = default(0);
         int localClock = default(0);
+        bool is_large = default (true);
         @display("bgb=1019,568;bgl=2");
     gates:
         input inReplicas[numberReplicas+2];
@@ -32,6 +33,7 @@ module Client
         application: Application {
             parameters:
                 clientID = clientID;
+                is_large = is_large;
                 @display("p=175,28");
         }
         invocationManager: InvocationManager {

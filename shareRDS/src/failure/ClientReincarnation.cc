@@ -20,7 +20,7 @@ void ClientReincarnation::initialize()
     clientID = par("clientID");
     reinc = new SystemMsg();
     reinc->setReplyCode(0);
-    scheduleAt(simTime()+ 500.0,reinc);
+    scheduleAt(simTime()+ intuniform(0,400),reinc);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
