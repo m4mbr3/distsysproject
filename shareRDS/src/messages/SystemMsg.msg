@@ -31,8 +31,7 @@ enum ReplyCodeType{
 FAIL=0;
 SUCCESS=1;
 SUCC_CLIENT=2;
-REINC=3;
-NONE=4;
+NONE=3;
 };
 //Message
 message SystemMsg {

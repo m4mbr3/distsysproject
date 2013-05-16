@@ -46,7 +46,8 @@ SystemMsg* ReplicaGroupManager::generateReincarnationMessage(int replica, int cl
     SystemMsg * ttmsg = new SystemMsg();
     ttmsg->setClientID(clientID);
     ttmsg->setReplicaID(replica);
-    ttmsg->setReplyCode(3);
+    ttmsg->setReplyCode(NONE);
+    ttmsg->setOperation(REINC);
     return ttmsg;
     }
 void ReplicaGroupManager::handleMessage(cMessage *msg)
@@ -63,8 +64,9 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         //In this piece of code i send one reincarnation message and then i schedule the next one
         if(reincCounter < ReplicaIDs.size()){
             send(generateReincarnationMessage(ReplicaIDs.at(reincCounter), clientID),"out", TO_NETWORK);// i send messages to all my connected replica.
+            std::cout << "sended message to" <<ReplicaIDs.at(reincCounter) << std::endl;
             reincCounter++;
-            scheduleAt(simTime()+5.0, ttmsg);
+            scheduleAt(simTime()+0.1, ttmsg);
         }
         else{
             delete ttmsg;
@@ -81,6 +83,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
         }
     }
     else if (gateID == gate("in", FROM_CLIENTREINCARNATION)->getId()){
+      // if(willfail){
         if(ttmsg->getReplyCode() == 1){
             // In this if branch I send a broadcast to all my connected replica
             // to say i'm alive
@@ -91,7 +94,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(reincCounter), clientID),"out",TO_NETWORK);// i send messages to all my connected replica.
             reincCounter++;
             SystemMsg* nextReincMSG = new SystemMsg();
-            scheduleAt(simTime()+5.0, nextReincMSG);
+            scheduleAt(simTime()+0.1, nextReincMSG);
             //}
             std::cout << "REPLICAGROUPMANAGER I'm alive "  <<std::endl;
             dead = false;
@@ -100,6 +103,7 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             std::cout << "REPLICAGROUPMANAGER I'm dead "  <<std::endl;
             dead = true;
         }
+       //}
         delete ttmsg;
     }
     else if (gateID == gate("in", FROM_INVOCATIONMANAGER)->getId()){

@@ -28,6 +28,7 @@ simple ReplicaGroupManager
        //The replica ID where the Manager is running
        int replicaID;
        int clientID;
+       bool willfail = default (false);
     gates:
        //in[0] is the writeAheadProtocol module
        //in[1] is the client reincarnation module

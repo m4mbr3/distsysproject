@@ -19,6 +19,7 @@ module Client
         int replicaID = default(0);
         int localClock = default(0);
         bool is_large = default (true);
+        bool willfail = default (true);
         @display("bgb=1019,568;bgl=2");
     gates:
         input inReplicas[numberReplicas+2];
@@ -47,6 +48,7 @@ module Client
                 ReplicaIDs = ReplicaIDs;
                 replicaID = replicaID;
                 numberReplicas = numberReplicas+2;
+                willfail = willfail;
                 @display("p=221,199");
         }
         writeAhead: WriteAheadLog {
@@ -57,6 +59,7 @@ module Client
         clientReincarnation: ClientReincarnation {
             parameters:
                 clientID = clientID;
+                willfail = willfail;
                 @display("p=297,266");
         }
         clientNetwork: ClientNetwork {

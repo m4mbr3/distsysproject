@@ -39,6 +39,7 @@ class ReplicaGroupManager : public cSimpleModule
         int reincCounter;
         bool dead;
         int clientID;
+        bool willfail;
         std::vector<int> ReplicaIDs;
         SystemMsg* generateReincarnationMessage(int replica, int clientID);
         int getClientID();
