@@ -19,6 +19,7 @@ simple Application
 {
     parameters:
         int clientID = default(-1);
+        bool is_large = default(true);
     gates:
         input in;
         output out;

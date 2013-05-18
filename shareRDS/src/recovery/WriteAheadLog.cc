@@ -87,7 +87,7 @@ void WriteAheadLog::handleMessage(cMessage *msg)
            sMsg->setOperation(DELETE);
 
    }
-   sMsg->setReplyCode(SUCCESS);
+   //sMsg->setReplyCode(SUCCESS);
    send(msg, "out");
 
 }

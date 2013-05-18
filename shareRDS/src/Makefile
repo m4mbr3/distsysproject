@@ -42,23 +42,24 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc and .msg files
 OBJS = \
+    $O/application/AppMsgGenerator.o \
     $O/application/Application.o \
     $O/application/AppMsgGenerator.o \
     $O/concurrency/DistMutualExclusion.o \
     $O/failure/ClientReincarnation.o \
     $O/invocation/InvocationManager.o \
-    $O/multicast/AtomicMulticast.o \
     $O/multicast/BasicMulticast.o \
-    $O/networks/BasicNetwork.o \
+    $O/multicast/AtomicMulticast.o \
     $O/networks/ClientNetwork.o \
+    $O/networks/BasicNetwork.o \
     $O/networks/ReplicaNetwork.o \
-    $O/recovery/LogManager.o \
     $O/recovery/WriteAheadLog.o \
-    $O/replication/DataItemsManager.o \
+    $O/recovery/LogManager.o \
     $O/replication/RemoteWriteProtocol.o \
     $O/replication/ReplicaGroupManager.o \
-    $O/synchronization/BarkleySynch.o \
+    $O/replication/DataItemsManager.o \
     $O/synchronization/LamportClock.o \
+    $O/synchronization/BarkleySynch.o \
     $O/synchronization/LamportClockClient.o \
     $O/test/Txc.o \
     $O/messages/CSynchMsg_m.o \

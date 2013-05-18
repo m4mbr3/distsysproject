@@ -10,6 +10,7 @@ class Application : public  cSimpleModule
     public:
         SystemMsg *ttmsg;
         int clientID;
+        bool is_large;
         std::map<std::string,int> ownedDataItems;
         //get and set methods
         int getClientID();
