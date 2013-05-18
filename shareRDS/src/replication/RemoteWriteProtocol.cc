@@ -118,8 +118,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                   if(msgReplicaID != NO_REPLICA && msgReplicaID!= replicaID){
                       //We set up a reply code for noticing that the msg should go to the client
                       sMsg->setReplyCode(SUCCESS);
-                      //We set up the replica code to -1
-                      //sMsg->setReplicaOwnerID(NO_REPLY_CODE);
                   }
                   else{
                       //We set up a reply code for noticing that the msg should go to the client
@@ -163,6 +161,9 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     }
     //We receive an answer from a replica to which we requested a remote write
      else if(gateID== gate("in",RW_IN_GATE)->getId()){
+             //we change the sender to -1
+             sMsg->setReplicaID(-1);
+             //We send out to the invocation manager
              send(sMsg, "out", IM_OUT_GATE);
      }
     //We receive an update message answer from the whole replicas, this is validated by the

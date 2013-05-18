@@ -137,13 +137,15 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     inAck = msgsAck.at(msgTreeID);
                     inAck[msgReplicaID] = true;
                     msgsAck[msgTreeID]=inAck;
+                    delete sMsg;
+
 
                 } catch (const std::out_of_range& e) {
                     throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
                 }
             }
             // incoming msg is an answer for a RemoteWrite request that the current replica has request in a remote write request
-            else if ((gateID == findGate("inReplicas", msgReplicaID)) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == SUCCESS) {
+            else if (msgReplicaID!= NO_REPLICA && (gateID == findGate("inReplicas", msgReplicaID)) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == SUCCESS) {
                 // check if the msg is on top of the outQueue or not
                 // if it's on top then send
                 send(sMsg->dup(), "outAnswer", RW_OUT_GATE);
@@ -182,9 +184,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We delete the message
                 delete sMsg;
             }
-
-
-        }
+         }
         //We clear the in queue
         inQueue.clear();
         //we schedule again the processing timer
@@ -238,7 +238,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                         //Sending out the msg
                         send(outgoingMsg, "outReplicas",i);
                     }
-
                     //Checking if the timer is already schedule
                     if(timeToCheckAcks->isScheduled())
                        {
@@ -272,7 +271,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
                 //Changing the color of the multicast msgs
-                outgoingMsg->setKind(4);
+                //outgoingMsg->setKind(4);
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
@@ -284,7 +283,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
                 //Changing the color of the multicast msgs
-                outgoingMsg->setKind(4);
+                //outgoingMsg->setKind(4);
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
@@ -327,7 +326,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                  */
                 if (!acki) { // false
                     okToSend = false;
-                    //We update the lamport clock because an event is happening with the replica system
+                    //We update the lamport clock because an event is happening inside the replica system
                    lamportClockHandle(m);
                    //Outgoing msg
                    SystemMsg* outgoingm= m->dup();
@@ -337,6 +336,8 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                    outgoingm->setReplyCode(NO_REPLY_CODE);
                    //Put as another color the retry of a multicast
                    outgoingm->setKind(5);
+                   //We put the current replica as the sender of the message
+                   outgoingm->setReplicaID(myReplicaID);
                    //Sending the message again
                    send(outgoingm, "outReplicas", i);
                 }
@@ -398,6 +399,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             sMsg->setLamportClock(lamportClock);
             //We save a duplication of the message such that we have the memory control in the current replica
             outQueue.push_back(sMsg->dup());
+
         }
         //Message comes from a client to a replica
         //TODO: add logic here
@@ -421,6 +423,8 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 orderInQueue();
            }
         }
+        //We delete the original message from the client
+        delete sMsg;
     }
 }
 //TODO Implement a smarter way of ordering
