@@ -70,7 +70,7 @@ network TwoReplicaTest2
                 operationOrder = "w";
                 dataItemsID = "a";
                 numberReplicas = nReplicas;
-				timerOffset = 20.0;
+				timerOffset = 15.0;
                 @display("p=249,120");
         }
     connections allowunconnected:

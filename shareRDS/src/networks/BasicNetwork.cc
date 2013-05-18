@@ -39,18 +39,17 @@ void BasicNetwork::handleMessage(cMessage *msg)
             //i flush the table of the connections
             open_connections.clear();
         }
-        send(ttmsg, "out"+TO_LAMPORTCLOCK);
+        send(ttmsg, "out", TO_LAMPORTCLOCK);
     }
     else if ( gateID == gate ("in",FROM_CLIENTNETWORK)->getId()){
        /*
         auto result = std::find(open_connections.begin(), open_connections.end(), std::pair<int, int>(ttmsg->getReplicaID(),ttmsg->getDataID()));
         if ( result != open_connections.end()){
             open_connections.erase(result);
-        }
-        send(ttmsg, "out"+TO_INVOCATIONMANAGER);
-        */
+        }*/
+        send(ttmsg, "out",TO_INVOCATIONMANAGER);
     }
     else if ( gateID == gate("in",FROM_LAMPORTCLOCK)->getId()){
-        send(ttmsg, "out"+TO_CLIENTNETWORK);
+        send(ttmsg, "out", TO_CLIENTNETWORK);
     }
 }

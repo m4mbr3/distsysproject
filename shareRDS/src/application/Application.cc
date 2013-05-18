@@ -6,10 +6,11 @@ Define_Module(Application);
 void Application::initialize()
 {
     setClientID((int)par("clientID"));
+
     if (clientID == -1 )
         throw cRuntimeError ("Invalid client ID %d;must be >= 0", clientID );
     ttmsg = new SystemMsg();
-    scheduleAt(3.0, ttmsg);
+    scheduleAt(simTime()+3.0, ttmsg);
 }
 
 void Application::handleMessage(cMessage *msg)
@@ -17,7 +18,7 @@ void Application::handleMessage(cMessage *msg)
     SystemMsg *ttmsg = check_and_cast<SystemMsg*>(msg);
     if (ttmsg->isSelfMessage()){
         // I received a message from myself
-        scheduleAt(intuniform(4,20), ttmsg);
+        scheduleAt(intuniform(4,20)+simTime(), ttmsg);
         SystemMsg *msgGen = Application::generateMessage();
         send (msgGen, "out");
     }
@@ -51,10 +52,14 @@ SystemMsg* Application::generateMessage(){
     SystemMsg *ttmsg = new SystemMsg();
     ttmsg->setClientID(clientID);
     ttmsg->setOperation(intuniform(0,1));
-    ttmsg->setData(intuniform(-1000, 1000));
-    //ttmsg->setDataID(((intuniform(0,100)%2)==0) ?(const char *) 'a' + rand() % (('z'-'a') + 1): (const char *)'A' + rand() % (('Z'-'A') + 1));
+    ttmsg->setReplyCode(NONE);
+    if (ttmsg->getOperation())
+        ttmsg->setData(intuniform(-1000, 1000));
     char buffer[33];
-    ttmsg->setDataID((intuniform(0,100)%2) == 0 ? itoa((intuniform(0,25)+'a'),buffer,10): itoa((intuniform(0,25)+'A'),buffer,10));
+    if(is_large)
+        ttmsg->setDataID((intuniform(0,100)%2) == 0 ? itoa((intuniform(0,25)+'a'),buffer,10): itoa((intuniform(0,25)+'A'),buffer,10));
+    else
+        ttmsg->setDataID(itoa((intuniform(0,5)+'A'),buffer,10));
     return ttmsg;
 }
 int Application::getClientID()

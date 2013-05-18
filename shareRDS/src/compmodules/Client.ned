@@ -13,15 +13,16 @@ import sharerds.synchronization.LamportClockClient;
 module Client
 {
     parameters:
-        int clientID = default (-1);
-        int numberReplicas = default (2);
-		string ReplicaIDs;
-		int replicaID = default(0);
-		int localClock = default(0);
-        @display("bgb=1019,568");
+        int clientID = default(-1);
+        int numberReplicas = default(2);
+        string ReplicaIDs;
+        int replicaID = default(0);
+        int localClock = default(0);
+        bool is_large = default (true);
+        @display("bgb=1019,568;bgl=2");
     gates:
-        input inReplicas[numberReplicas];
-        output outReplicas[numberReplicas];
+        input inReplicas[numberReplicas+2];
+        output outReplicas[numberReplicas+2];
 
     types:
         channel Unnamed
@@ -32,37 +33,38 @@ module Client
         application: Application {
             parameters:
                 clientID = clientID;
+                is_large = is_large;
                 @display("p=175,28");
         }
         invocationManager: InvocationManager {
             parameters:
-				entityID = clientID;
+                entityID = clientID;
                 @display("p=221,120");
         }
         replicaGroupManager: ReplicaGroupManager {
             parameters:
                 clientID = clientID;
-				ReplicaIDs = ReplicaIDs;
-				replicaID = replicaID;
-				numberReplicas = numberReplicas;
+                ReplicaIDs = ReplicaIDs;
+                replicaID = replicaID;
+                numberReplicas = numberReplicas+2;
                 @display("p=221,199");
         }
         writeAhead: WriteAheadLog {
             parameters:
-				replicaID = clientID;
+                replicaID = clientID;
                 @display("p=126,266");
         }
         clientReincarnation: ClientReincarnation {
             parameters:
-                clientID  = clientID;
+                clientID = clientID;
                 @display("p=297,266");
         }
         clientNetwork: ClientNetwork {
             parameters:
                 @display("p=299,474");
             gates:
-                inReplicas[numberReplicas];
-                outReplicas[numberReplicas];
+                inReplicas[numberReplicas+2];
+                outReplicas[numberReplicas+2];
 
         }
 
@@ -95,7 +97,7 @@ module Client
             inReplicas[i-2] --> clientNetwork.inReplicas[i];
         }
         for i=2..sizeof(outReplicas)-1 {
-        	clientNetwork.outReplicas[i] --> outReplicas[i-2]; 
+            clientNetwork.outReplicas[i] --> outReplicas[i-2];
         }
 }
 

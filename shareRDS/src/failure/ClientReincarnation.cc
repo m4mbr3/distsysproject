@@ -20,29 +20,29 @@ void ClientReincarnation::initialize()
     clientID = par("clientID");
     reinc = new SystemMsg();
     reinc->setReplyCode(0);
-    scheduleAt(simTime()+ 500.0,reinc);
+    scheduleAt(simTime()+ intuniform(0,400),reinc);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)
 {
     SystemMsg *reinc = check_and_cast<SystemMsg*> (msg);
     if (reinc->isSelfMessage() ){
-        SystemMsg* msg = new SystemMsg();
+        SystemMsg* msg_new = new SystemMsg();
         if(reinc->getReplyCode()){
             //set i'm dead message to replica group manager
             //prepare i'm alive message for myself
             reinc->setReplyCode(0);
-            msg->setReplyCode(1);
+            msg_new->setReplyCode(1);
         }
         else{
             reinc->setReplyCode(1);
-            msg->setReplyCode(0);
+            msg_new->setReplyCode(0);
         }
         //here i phisically send the i'm alive or i'm dead
         //message to the replica group manager
         //and i schedule the reincarnation message
         //to myself
-        send(msg,"out");
-        scheduleAt(intuniform(0,500),reinc);
+        send(msg_new,"out");
+        scheduleAt(intuniform(0,500)+simTime(),reinc);
     }
 }
