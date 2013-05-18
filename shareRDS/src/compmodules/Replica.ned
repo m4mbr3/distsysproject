@@ -50,25 +50,25 @@ module Replica
         im: InvocationManager {
             parameters:
                 entityID = rID;
-                @display("p=138,45;i=block/downarrow");
+                @display("p=222,34;i=block/downarrow");
         }
         //The remote write protocol component
         rwp: RemoteWriteProtocol {
             parameters:
                 replicaID = rID;
-                @display("p=86,108;i=block/cogwheel");
+                @display("p=142,145;i=block/cogwheel");
         }
         //The data items manager
         dim: DataItemsManager {
             parameters:
                 replicaID = rID;
-                @display("p=166,108;i=block/buffer2");
+                @display("p=275,145;i=block/buffer2");
         }
         //The write ahead log
         wal: WriteAheadLog {
             parameters:
                 replicaID = rID;
-                @display("p=26,117;i=block/table");
+                @display("p=26,145;i=block/table");
         }
         //the network module
         nw: ReplicaNetwork {
@@ -77,7 +77,7 @@ module Replica
                 processingTimerOffset = pTimerOffset;
                 sendingTimerOffset = sTimerOffset;
                 checkAckTimerOffset = cTimerOffset;
-                @display("p=99,216;i=block/broadcast");
+                @display("p=222,260;i=block/broadcast");
             gates:
                 inClients[numberClients];
                 inReplicas[numberReplicas];

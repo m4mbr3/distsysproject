@@ -312,7 +312,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             //For validating if we already have ALL acks from all the replicas in the system
             bool okToSend = true;
             //The pointer to the message
-            SystemMsg* m =msgsWaitingForAck[msgID];
+            SystemMsg* m = msgsWaitingForAck[msgID];
             int size = acks.size();
             //We check if we have received all the acks of the current message (msgID)
             for (int i = 0; i < size; i++) {

@@ -35,7 +35,7 @@ network TwoClientsOneRep
                 operationOrder ="w r";
                 dataItemsID = "a b";
                 numberReplicas = nReplicas;
-                timerOffset = 10.0;
+                timerOffset = 3.0;
 	            @display("p=48,38");
         }
         client1: AppMsgGenerator {
@@ -44,8 +44,8 @@ network TwoClientsOneRep
                 //This client msgs are process by the replica with id 0
                 replicaId = 0;
                 //Writting and reading a set of data items in the initial connected replica
-                operationOrder ="w r";
-                dataItemsID = "b a";
+                operationOrder ="w r r";
+                dataItemsID = "b a a";
                 numberReplicas = nReplicas;
                 timerOffset = 10.0;
            	 	@display("p=48,162");
