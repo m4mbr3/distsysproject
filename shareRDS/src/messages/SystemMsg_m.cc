@@ -40,7 +40,7 @@ EXECUTE_ON_STARTUP(
     e->insert(UPDATE, "UPDATE");
     e->insert(ACK, "ACK");
     e->insert(DELETE, "DELETE");
-    e->insert(REINC, "REINC");
+    e->insert(REINCAR, "REINCAR");
 );
 
 EXECUTE_ON_STARTUP(
@@ -49,7 +49,7 @@ EXECUTE_ON_STARTUP(
     e->insert(FAIL, "FAIL");
     e->insert(SUCCESS, "SUCCESS");
     e->insert(SUCC_CLIENT, "SUCC_CLIENT");
-    e->insert(REINCAR, "REINCAR");
+    e->insert(REINC, "REINC");
     e->insert(NONE, "NONE");
 );
 

@@ -81,9 +81,9 @@ network TwoReplicaTest2
 
         //Connecting all the replicas to all the ones in the system
         //The channel to replica 1 from replica 0 goes through outReplica[1] of replica 0
-        r0.outReplicas[1] --> r1.inReplicas[0];
+        r0.outReplicas[1] --> ned.DatarateChannel {datarate = 1kbps ;} --> r1.inReplicas[0];
         //The channel to replica 0 from replica 1 goes through outReplica[0] of replica 1
-        r1.outReplicas[0] --> r0.inReplicas[1];
+        r1.outReplicas[0] -->  {datarate = 1kbps ; disabled =  true;} --> r0.inReplicas[1];
         //connecting the client to the replicas
         //Connecting the communication from the client to the replicas
         //Connecting c0

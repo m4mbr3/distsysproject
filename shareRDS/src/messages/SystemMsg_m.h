@@ -26,7 +26,7 @@
  * UPDATE = 4;
  * ACK = 5;
  * DELETE = 6;
- * REINC=7;
+ * REINCAR=7;
  * };
  * </pre>
  */
@@ -38,7 +38,7 @@ enum OperationType {
     UPDATE = 4,
     ACK = 5,
     DELETE = 6,
-    REINC = 7
+    REINCAR = 7
 };
 
 /**
@@ -48,7 +48,7 @@ enum OperationType {
  * FAIL=0;
  * SUCCESS=1;
  * SUCC_CLIENT=2;
- * REINCAR=3;
+ * REINC=3;
  * NONE=4;
  * };
  * </pre>
@@ -57,7 +57,7 @@ enum ReplyCodeType {
     FAIL = 0,
     SUCCESS = 1,
     SUCC_CLIENT = 2,
-    REINCAR = 3,
+    REINC = 3,
     NONE = 4
 };
 
