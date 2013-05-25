@@ -35,6 +35,7 @@ network TwoReplicaTest2
                 pTimerOffset = 2.0;
                 sTimerOffset = 3.0;
                 cTimerOffset = 20.0;
+                mMaxTries = 3;
                 @display("p=140,58");
         }
         r1: Replica {
@@ -45,6 +46,8 @@ network TwoReplicaTest2
                 pTimerOffset = 2.0;
                 sTimerOffset = 3.0;
                 cTimerOffset = 14.0;
+                crTimerOffset = 15.0;
+                rrMaxTries = 1;
                 @display("p=140,195");
         }
         //Clients

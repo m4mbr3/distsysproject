@@ -26,6 +26,10 @@ simple ReplicaNetwork
 		double processingTimerOffset = default(1.0);
 		double sendingTimerOffset = default(3.0);
 		double checkAckTimerOffset = default(10.0);
+		double checkRemoteReqTimerOffset = default (5.0);
+		//Defining the retries of multicast and remote write requests for simulating failure
+		int multicastMaxTries = default(4);
+		int remoteRequestMaxTries = default(3);
     gates:
         input inRemoteRequests[2];		// from RemoteWriteProtocol
         							// [0] for remoteWrite

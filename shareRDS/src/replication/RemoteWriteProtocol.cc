@@ -75,10 +75,16 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         //if is a rollback of a just created data item, then we will need to delete it
         else if(msgOperationID == DELETE && msgReplyCode == SUCCESS)
         {
+            //We answer the execution of the write as failed
+            sMsg->setReplyCode(FAIL);
+            //We send back the answer to the requester
+            send(msg, "out", IM_OUT_GATE);
+            /*OLD CODE
             //We keep the operation DELETE
              sMsg->setOperation(DELETE);
              //We delete the data item
              send(msg, "out", DIM_OUT_GATE);
+             */
         }
         //If the message through the network was successfully sent and executed on the other replicas
         else if(msgOperationID == COMMIT && msgReplyCode == SUCCESS)
