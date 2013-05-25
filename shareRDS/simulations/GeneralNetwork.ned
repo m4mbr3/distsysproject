@@ -23,7 +23,14 @@ network GeneralNetwork
     parameters:
         int nReplicas = default(2);
         int nClients = default(2);
-
+        
+    types:
+        channel C extends ned.DatarateChannel {
+        	datarate = 100bps;
+            delay = exponential(10s);	// exponentially distributed with mean = 10 seconds
+            ber = 1e-5;
+        }
+        
     submodules:
         // Generate clients
     	client[nClients] : AppMsgGenerator {
@@ -55,7 +62,7 @@ network GeneralNetwork
         }
         // Connect replicas and replicas
         for srcReplica = 0..nReplicas-1, for destReplica = 0..nReplicas-1{
-        	replica[srcReplica].outReplicas[destReplica] --> replica[destReplica].inReplicas[srcReplica];
+        	replica[srcReplica].outReplicas[destReplica] --> C --> replica[destReplica].inReplicas[srcReplica];
         }
         
         

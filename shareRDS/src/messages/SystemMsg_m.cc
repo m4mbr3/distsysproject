@@ -55,7 +55,7 @@ EXECUTE_ON_STARTUP(
 
 Register_Class(SystemMsg);
 
-SystemMsg::SystemMsg(const char *name, int kind) : cMessage(name,kind)
+SystemMsg::SystemMsg(const char *name, int kind) : cPacket(name,kind)
 {
     this->clientID_var = -1;
     this->replicaID_var = -1;
@@ -67,7 +67,7 @@ SystemMsg::SystemMsg(const char *name, int kind) : cMessage(name,kind)
     this->data_var = 0;
 }
 
-SystemMsg::SystemMsg(const SystemMsg& other) : cMessage(other)
+SystemMsg::SystemMsg(const SystemMsg& other) : cPacket(other)
 {
     copy(other);
 }
@@ -79,7 +79,7 @@ SystemMsg::~SystemMsg()
 SystemMsg& SystemMsg::operator=(const SystemMsg& other)
 {
     if (this==&other) return *this;
-    cMessage::operator=(other);
+    cPacket::operator=(other);
     copy(other);
     return *this;
 }
@@ -98,7 +98,7 @@ void SystemMsg::copy(const SystemMsg& other)
 
 void SystemMsg::parsimPack(cCommBuffer *b)
 {
-    cMessage::parsimPack(b);
+    cPacket::parsimPack(b);
     doPacking(b,this->clientID_var);
     doPacking(b,this->replicaID_var);
     doPacking(b,this->replicaOwnerID_var);
@@ -111,7 +111,7 @@ void SystemMsg::parsimPack(cCommBuffer *b)
 
 void SystemMsg::parsimUnpack(cCommBuffer *b)
 {
-    cMessage::parsimUnpack(b);
+    cPacket::parsimUnpack(b);
     doUnpacking(b,this->clientID_var);
     doUnpacking(b,this->replicaID_var);
     doUnpacking(b,this->replicaOwnerID_var);
@@ -227,7 +227,7 @@ class SystemMsgDescriptor : public cClassDescriptor
 
 Register_ClassDescriptor(SystemMsgDescriptor);
 
-SystemMsgDescriptor::SystemMsgDescriptor() : cClassDescriptor("SystemMsg", "cMessage")
+SystemMsgDescriptor::SystemMsgDescriptor() : cClassDescriptor("SystemMsg", "cPacket")
 {
 }
 

@@ -35,7 +35,7 @@ REINC=3;
 NONE=4;
 };
 //Message
-message SystemMsg {
+packet SystemMsg {
     int clientID =-1;		// ID of the client that make the request
     int replicaID=-1;		// ID of the sender
     int replicaOwnerID = -1;	// ID of the owner of dataID

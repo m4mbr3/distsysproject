@@ -64,7 +64,7 @@ enum ReplyCodeType {
 /**
  * Class generated from <tt>messages/SystemMsg.msg</tt> by opp_msgc.
  * <pre>
- * message SystemMsg {
+ * packet SystemMsg {
  *     int clientID =-1;		
  *     int replicaID=-1;		
  *     int replicaOwnerID = -1;	
@@ -76,7 +76,7 @@ enum ReplyCodeType {
  * };
  * </pre>
  */
-class SystemMsg : public ::cMessage
+class SystemMsg : public ::cPacket
 {
   protected:
     int clientID_var;
