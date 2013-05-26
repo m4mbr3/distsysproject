@@ -34,16 +34,10 @@
 // outRemoteUpdate
 #define RU_OUT_GATE 1
 
-// offsets for timers
-#define PROCESSING_TIMER_OFFSET 5.0
-#define SENDING_TIMER_OFFSET 15.0
-#define CHECKING_TIMER_OFFSET 15.0
-
-
-
 //The default values
 #define NO_REPLY_CODE -1
 #define NO_REPLICA -1
+
 
 
 class ReplicaNetwork : public cSimpleModule
@@ -61,6 +55,10 @@ class ReplicaNetwork : public cSimpleModule
         std::map<long, std::vector<bool> > msgsAck;
         //The messages for which we should take care of the acks
         std::map<long, SystemMsg*> msgsWaitingForAck;
+        //The number of retries that have been done for a multicast message
+        std::map<long,int> multicastRetries;
+        //The maximum number of retries for multicast messages
+        int multicastMaxRetries;
 
         //MANAGING THE INCOMING AND OUTGOING MESSAGES
         // queue for requests that are received from outside and in queue for processing
@@ -69,6 +67,16 @@ class ReplicaNetwork : public cSimpleModule
         // queue for requests that are in queue for sending out
         std::vector<SystemMsg*> outQueue;
 
+        //MANAGING THE REMOTE REQUESTS STATE
+        //The remote request from which we are expecting an answer
+        std::map <long, SystemMsg*> remoteRequests;
+        //The remote request state (if it havent been answer)
+        std::map<long, bool> remoteReqState;
+        //The number of retries for re-sending a remote write
+        std::map<long, int> remoteRequestRetries;
+        //The maximum number of retries for multicast messages
+        int remoteRequestMaxRetries;
+
         //SELF MESSAGES
         //A self msg to trigger queuing process overtime
         cMessage *timeToProcessRequest;
@@ -76,10 +84,13 @@ class ReplicaNetwork : public cSimpleModule
         cMessage *timeToSendOutRequest;
         //A self msg to trigger checking out ack msgs overtime
         cMessage *timeToCheckAcks;
+        //A self msg to trigger checking if a remote request has been answer
+        cMessage *timeToCheckRemoteRequests;
         //TIMERS OFFSETS
         double pTimerOffset;
         double sTimerOffset;
         double caTimerOffset;
+        double crrTimerOffset;
         //Update the local lamport clock of the replica
         void lamportClockHandle(SystemMsg *msg);
         //Order the replica messages in the inQueue
