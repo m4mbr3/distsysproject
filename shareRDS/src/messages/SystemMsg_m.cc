@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgc 4.2 from messages/SystemMsg.msg.
+// Generated file, do not edit! Created by opp_msgc 4.3 from messages/SystemMsg.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
