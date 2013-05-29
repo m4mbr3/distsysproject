@@ -1,4 +1,7 @@
 # Partial Tkenv config file -- see $HOME/.tkenvrc as well
-inspector "Network.client" "Client" "2" "607x343+2366+0:normal"
-inspector "Network" "Network" "2" "607x343+2673+710:normal"
+inspector "simulation.scheduled-events" "cMessageHeap" "1" "857x267+503+401:normal"
+inspector "Network1.replica1.outReplicas[2]" "cGate" "2" "470x358+27+339:normal"
+inspector "Network1.client1" "Client" "2" "607x338+0+403:normal"
+inspector "Network.client" "Client" "2" "607x338+0+365:normal"
+inspector "Network.replica.nw." "SystemMsg" "1" "402x374+0+367:normal"
 

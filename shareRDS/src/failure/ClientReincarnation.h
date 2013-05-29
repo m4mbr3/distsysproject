@@ -13,6 +13,7 @@ class ClientReincarnation : public cSimpleModule
         int clientID;
         //Message to decide when die or live
         SystemMsg *reinc;
+        bool willfail;
     protected:
         void initialize();
         void handleMessage(cMessage *msg);

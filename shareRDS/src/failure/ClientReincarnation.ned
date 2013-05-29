@@ -22,6 +22,7 @@ simple ClientReincarnation
 {
     parameters:
         int clientID = default(-1);
+        bool willfail = default (true);
     gates:
         input in;
         output out;

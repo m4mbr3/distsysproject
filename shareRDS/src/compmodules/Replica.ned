@@ -33,6 +33,10 @@ module Replica
         double pTimerOffset = default(2.0);
         double sTimerOffset = default(3.0);
         double cTimerOffset = default(14.0);
+        double crTimerOffset = default (5.0);
+		//Defining the retries of multicast and remote write requests for simulating failure
+		int mMaxTries = default(4);
+		int rrMaxTries = default(3);
 		//Display parameters
         @display("i=block/buffer2;bgb=321,354");
 
@@ -77,6 +81,9 @@ module Replica
                 processingTimerOffset = pTimerOffset;
                 sendingTimerOffset = sTimerOffset;
                 checkAckTimerOffset = cTimerOffset;
+                checkRemoteReqTimerOffset = crTimerOffset;
+                multicastMaxTries = mMaxTries;
+                remoteRequestMaxTries = rrMaxTries;
                 @display("p=222,260;i=block/broadcast");
             gates:
                 inClients[numberClients];
