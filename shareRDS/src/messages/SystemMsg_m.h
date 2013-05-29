@@ -26,7 +26,7 @@
  * UPDATE = 4;
  * ACK = 5;
  * DELETE = 6;
- * REINC=7;
+ * REINCAR=7;
  * };
  * </pre>
  */
@@ -38,7 +38,7 @@ enum OperationType {
     UPDATE = 4,
     ACK = 5,
     DELETE = 6,
-    REINC = 7
+    REINCAR = 7
 };
 
 /**
@@ -56,13 +56,14 @@ enum ReplyCodeType {
     FAIL = 0,
     SUCCESS = 1,
     SUCC_CLIENT = 2,
-    NONE = 3
+    REINC = 3,
+    NONE = 4
 };
 
 /**
  * Class generated from <tt>messages/SystemMsg.msg</tt> by opp_msgc.
  * <pre>
- * message SystemMsg {
+ * packet SystemMsg {
  *     int clientID =-1;		
  *     int replicaID=-1;		
  *     int replicaOwnerID = -1;	
@@ -74,7 +75,7 @@ enum ReplyCodeType {
  * };
  * </pre>
  */
-class SystemMsg : public ::cMessage
+class SystemMsg : public ::cPacket
 {
   protected:
     int clientID_var;

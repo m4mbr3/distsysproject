@@ -127,20 +127,15 @@ void AppMsgGenerator::handleMessage(cMessage *msg)
         //Sending the message
         if(m!= NULL)
         {
-            send(m, "replicasOut", replicaID);
+            send(m->dup(), "replicasOut", replicaID);
             //Scheduling another sending of the message
             scheduleAt(simTime() + exponential(1.0), timeToSendMessage);
-
+            delete m;
         }
     }
     else{
-
-        int gateID = msg->getArrivalGateId();
-        //We receive a message of success of a writing or a read
-        if(gateID == findGate("in")){
-            //we delete the message because this is the end of it life cycle
-            delete msg;
-        }
+        //we delete the message because this is the end of it life cycle
+        delete msg;
     }
 
 }

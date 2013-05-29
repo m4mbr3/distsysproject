@@ -24,7 +24,7 @@ ROLLBACK=3;
 UPDATE = 4;
 ACK = 5;
 DELETE = 6;
-REINC=7;
+REINCAR=7;
 };
 //Reply code enum
 enum ReplyCodeType{
@@ -34,7 +34,7 @@ SUCC_CLIENT=2;
 NONE=3;
 };
 //Message
-message SystemMsg {
+packet SystemMsg {
     int clientID =-1;		// ID of the client that make the request
     int replicaID=-1;		// ID of the sender
     int replicaOwnerID = -1;	// ID of the owner of dataID

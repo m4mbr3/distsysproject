@@ -35,7 +35,8 @@ network ThreeReplicaTest
                 numberClients = nClients;
                 pTimerOffset = 2.0;
                 sTimerOffset = 3.0;
-                cTimerOffset = 14.0;
+                cTimerOffset = 10.0;
+                mMaxTries = 1;
                 @display("p=178,58");
         }
         r1: Replica {

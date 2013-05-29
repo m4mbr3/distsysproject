@@ -26,6 +26,9 @@ ReplicaNetwork::ReplicaNetwork()
     timeToSendOutRequest = NULL;
     timeToSendOutRequest = NULL;
     timeToCheckAcks = NULL;
+    timeToCheckRemoteRequests = NULL;
+    multicastMaxRetries = -1;
+    remoteRequestMaxRetries =-1;
     lamportClock = 0;
     lcLastMsgSent = lamportClock;
 }
@@ -34,15 +37,7 @@ ReplicaNetwork::~ReplicaNetwork()
 {
     //Cleaning up the maps
     msgsAck.clear();
-    //This should have all the references should already be deleted
-    /*
-    std::map<long, SystemMsg*>::iterator it;
-    for (it = msgsWaitingForAck.begin(); it != msgsWaitingForAck.end(); it++)
-    {
-        SystemMsg* m = it->second;
-        delete m;
-    }
-    */
+    //Cleaning up the messages that are waiting for acks
     msgsWaitingForAck.clear();
     //Cleaning up the vectors, the memory space pointed by the pointers should have been already emptied
     //Cleaning the in queue
@@ -60,10 +55,14 @@ ReplicaNetwork::~ReplicaNetwork()
         delete m;
     }
     outQueue.clear();
+    //Clean the remote write requests waiting for answer
+    remoteRequests.clear();
+    remoteReqState.clear();
     //Cancelling and deleting the timers
     cancelAndDelete(timeToSendOutRequest);
     cancelAndDelete(timeToProcessRequest);
     cancelAndDelete(timeToCheckAcks);
+    cancelAndDelete(timeToCheckRemoteRequests);
 }
 
 void ReplicaNetwork::initialize()
@@ -73,27 +72,40 @@ void ReplicaNetwork::initialize()
     // Validating that a replica ID was defined
     if(myReplicaID == -1)
         throw cRuntimeError("REPLICA NETWORK: Invalid replica ID %d; must be >= 0", myReplicaID);
-
+    //Initializing the lamport clock
     lamportClock = 0;
     WATCH(lamportClock);
 
+    //Initializing the timestamp (using the lamport clock) for the last message processed in the system
     lcLastMsgSent = -1;
     WATCH(lcLastMsgSent);
 
+    //Configuring the timer for processing the input queue
     timeToProcessRequest = new cMessage("processingRequestTimer");
-
-    // schedule to send msg to request to process queuing msg
-    // send this to InvocationManager
     pTimerOffset = par("processingTimerOffset").doubleValue();
     scheduleAt(simTime() + exponential(pTimerOffset), timeToProcessRequest);
 
+    //Configuring the timer for processing the output queue
     sTimerOffset = par("sendingTimerOffset").doubleValue();
     timeToSendOutRequest = new cMessage("sendRequestTimer");
-    // schedule to process outQueue
     scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
 
+    //Configuring the timer for checking acks and then use it when necessary
     caTimerOffset =  par("checkAckTimerOffset").doubleValue();
     timeToCheckAcks = new cMessage("checkAcksTimer");
+
+    //Configuring the timer for checking the state of a remote write request
+    crrTimerOffset = par("checkRemoteReqTimerOffset").doubleValue();
+    //We create the self message (timer) for checking the stat of a remote requests
+    timeToCheckRemoteRequests = new cMessage("checkRemoteReqTimer");
+
+    //Recovering the maximum number of retries for multicast and remote request messages
+    multicastMaxRetries = par("multicastMaxTries");
+    remoteRequestMaxRetries = par("remoteRequestMaxTries");
+    //We watch them
+    WATCH(multicastMaxRetries);
+    WATCH(remoteRequestMaxRetries);
+
 }
 
 void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
@@ -132,18 +144,48 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
 
             // the incoming msg from another replica and it is an ACK answer of a RemoteUpdate from the current replica
             if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgOperation == ACK)) {
-                std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
+                bubble("Received an ACK, checking it");
+                // first we check whether if we are waiting for this ACK or not
+                // by looking for the same msgTreeID in waiting for ACK queue
+                std::map<long, SystemMsg*>::iterator it;
+                bool delThisAck = true;
                 try {
-                    inAck = msgsAck.at(msgTreeID);
-                    inAck[msgReplicaID] = true;
-                    msgsAck[msgTreeID]=inAck;
+                    for (it = msgsWaitingForAck.begin(); it != msgsWaitingForAck.end(); it++) {
+                        if (msgTreeID == it->first) {
+                            delThisAck = false;     // if we find the same msgTreeID in the queue then won't delete this ACK
+                        }
+                    }
+                } catch (const std::exception& e) {
+                    throw cRuntimeError("Cannot read msgsWaitingForAck, it might be empty");
+                }
 
-                } catch (const std::out_of_range& e) {
-                    throw cRuntimeError("REPLICA NETWORK: An error occurred on processing acks in Replica with id %d", myReplicaID);
+//
+//                // after the checking iteration, if we cannot find the same msgTreeID in the queue
+//                // then the received ACK is unknown, then DELETE it
+                if (delThisAck) {
+                    bubble("Received unknown or already processed ACK!");
+                    delete msg;
+                }
+//                // otherwise, process it
+                else {
+                    bubble("Legal ACK, processing it");
+                    std::vector<bool> inAck;   // a vector to store all ACKs received for this msg
+                    try {
+//                        inAck = msgsAck.at(msgTreeID);
+//                        inAck[msgReplicaID] = true;
+//                        msgsAck[msgTreeID]=inAck;
+                        msgsAck[msgTreeID][msgReplicaID]=true;
+                        delete sMsg;
+                    } catch (const std::out_of_range& e) {
+//                        throw cRuntimeError("some error here");
+                        delete sMsg;
+                    }
+
                 }
             }
             // incoming msg is an answer for a RemoteWrite request that the current replica has request in a remote write request
-            else if ((gateID == findGate("inReplicas", msgReplicaID)) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == SUCCESS) {
+            else if (msgReplicaID!= NO_REPLICA && (gateID == findGate("inReplicas", msgReplicaID)) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == SUCCESS) {
+                bubble("answer for a RemoteWrite");
                 // check if the msg is on top of the outQueue or not
                 // if it's on top then send
                 send(sMsg->dup(), "outAnswer", RW_OUT_GATE);
@@ -153,6 +195,11 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //inQueue.erase(inQueue.begin()+i);
                 //We delete the message
                 delete sMsg;
+                /*
+                 * Managing the channel failure for remote requests
+                 */
+                //We have an answer of a previous remote write request
+                remoteReqState[msgTreeID] = true;
 
             }
             //The incoming msg is a remote update request from another replica
@@ -182,9 +229,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We delete the message
                 delete sMsg;
             }
-
-
-        }
+         }
         //We clear the in queue
         inQueue.clear();
         //we schedule again the processing timer
@@ -194,8 +239,11 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
     else if (msg == timeToSendOutRequest) {
         int size = outQueue.size();
         for (int i = 0; i < size; i++) {
-            SystemMsg* sMsg = outQueue.at(i);
-            // retrieve other data from the msg
+            //We retrieve a message in the queue
+            SystemMsg* sMsg = outQueue[i];
+            /**
+             * We retrieve other data from the msg
+             */
             int msgClientID = sMsg->getClientID();
             int msgReplicaID = sMsg->getReplicaID();
             int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
@@ -204,8 +252,18 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             std::string msgDataID = sMsg->getDataID();
             // retrieve the treeID of the msg because it won't change when cloning the msg
             int msgTreeID = sMsg->getTreeId();
+
+            /**
+             * Setting up the message with data from the sender
+             */
             //We set up the sender of the message
             sMsg->setReplicaID(myReplicaID);
+            //We set up the lamport clock of the message  as the current lamport clock of the replica
+            sMsg->setLamportClock(lamportClock);
+
+            /**
+             * Processing the out queue by choosing the correct out channel
+             */
             //The msg is a request for a remote update from the current replica to the rest of the replicas in the system
             if (msgReplicaOwnerID == myReplicaID && gateID == findGate("inRemoteRequests", RU_IN_GATE)) {
                 // multicast
@@ -223,27 +281,25 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     }
                     //We save the state of the acks of the involved message
                     msgsAck[msgTreeID] = temp;
+                    //We start the number of retries for the involved message
+                    multicastRetries[msgTreeID] =0;
                     /**
                      * Multicast
                      */
-                    bubble("Multicasting");
+                    bubble("Multicasting!");
                     //We multicast the messages, including ourselves
                     for (int i = 0; i< noOfReplicas; i++) {
                         //We send a duplicate of the current message
                         SystemMsg* outgoingMsg = sMsg->dup();
                         //We set up the reply code as -1, because we are waiting for an answer from a remote replica
                         outgoingMsg->setReplyCode(NO_REPLY_CODE);
+                        //Updating with the lamport clock
+                        //outgoingMsg->setLamportClock(lamportClock);
                         //Changing the color of the multicast msgs
                         outgoingMsg->setKind(4);
                         //Sending out the msg
                         send(outgoingMsg, "outReplicas",i);
                     }
-
-                    //Checking if the timer is already schedule
-                    if(timeToCheckAcks->isScheduled())
-                       {
-                           cancelEvent(timeToCheckAcks);
-                       }
                     //We schedule the timer for checking the state of the acks
                     if (timeToCheckAcks->isScheduled()) {
                         cancelEvent(timeToCheckAcks);
@@ -258,6 +314,22 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
            {
                //We send the msg to the owner of the data item
                 send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
+               /*
+                * Managing the channel failure for remote requests
+                */
+                //We save the related remote request
+                remoteRequests[msgTreeID] = sMsg->dup();
+                //We save the state as not answered
+                remoteReqState[msgTreeID] = false;
+                //We start the number of retries in zero
+                remoteRequestRetries[msgTreeID] =  0;
+                //Scheduling the timer
+                if (timeToCheckRemoteRequests->isScheduled()) {
+                    cancelEvent(timeToCheckRemoteRequests);
+                }
+                else {
+                    scheduleAt(simTime() + exponential(crrTimerOffset), timeToCheckRemoteRequests);
+                }
            }
             //incoming msg is an answer of a RemoteWrite request from a remote replica, we need to send it to the sender
             else if (msgReplicaID!=NO_REPLICA && msgReplicaID != myReplicaID && msgReplicaOwnerID == myReplicaID && gateID == findGate("inAnswer")){
@@ -271,8 +343,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 sMsg->setOperation(ACK);
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
-                //Changing the color of the multicast msgs
-                outgoingMsg->setKind(4);
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
@@ -283,13 +353,12 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 sMsg->setOperation(ACK);
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
-                //Changing the color of the multicast msgs
-                outgoingMsg->setKind(4);
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
             //We are processing a message that is an answer to a client request
            else {
+               bubble("OUT TO CLIENT!");
                send(sMsg->dup(), "outClients", msgClientID);
            }
             //We delete the message
@@ -309,51 +378,72 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             int msgID = it->first;
             //By default we dont need to delete this message becasue we do not know if it already has received all the acks
             msgToDelete[msgID] = false;
-            // Retrieving the state of the acks of the current msg
-            std::vector<bool> acks = it->second;
-            //For validating if we already have ALL acks from all the replicas in the system
-            bool okToSend = true;
             //The pointer to the message
-            SystemMsg* m =msgsWaitingForAck[msgID];
-            int size = acks.size();
-            //We check if we have received all the acks of the current message (msgID)
-            for (int i = 0; i < size; i++) {
-                //Retrieving the state of the ack on the replica i
-                bool acki = acks[i];
-                // check if we already received the ACK or not, if not then we resend the request
-                //TODO how many times do we try?
-                /**
-                 * Retrying the acks not received
-                 */
-                if (!acki) { // false
-                    okToSend = false;
-                    //We update the lamport clock because an event is happening with the replica system
-                   lamportClockHandle(m);
-                   //Outgoing msg
-                   SystemMsg* outgoingm= m->dup();
-                   //Set up the new lamport clock of the message
-                   outgoingm->setLamportClock(lamportClock);
-                   //Set up the reply code as -1
-                   outgoingm->setReplyCode(NO_REPLY_CODE);
-                   //Put as another color the retry of a multicast
-                   outgoingm->setKind(5);
-                   //Sending the message again
-                   send(outgoingm, "outReplicas", i);
-                }
+            SystemMsg* m = msgsWaitingForAck[msgID];
+            /**
+             * Retrying the acks not received
+             * Note: The retries are NOT done by replica, i.e for each replica we dont retry the maximum
+             * number of tries. Instead we only count the retries on the missing acks, i.e that the maximum
+             * number of tries is equal to the number of tries we re-send a set of acks which are not received
+             * in an ack checking.
+             */
+            //Validating the retries of the current message
+            int nRetries  = multicastRetries[msgID];
+           //We have exhausted the number of tries
+            if(nRetries >= multicastMaxRetries)
+            {
+              //We set up the reply code
+              SystemMsg* outgoingmsg = m->dup();
+              //The multicast has failed
+              outgoingmsg->setReplyCode(FAIL);
+              //Sending to the remote update answer gate, such that the remote write protocol can finish processing the request
+              send(outgoingmsg, "outAnswer", RU_OUT_GATE);
+              //We need to mark the message for deleting it from the messages waiting for acks
+              msgToDelete[msgID] = true;
+              //We delete the reference to the local message, because we always have been sent a duplication
+              delete m;
             }
-            //If all acks has been received for the current message (msgID)
-            if (okToSend) {
-                //We update the lamport clock because an event is happening with the replica system
-                lamportClockHandle(m);
-                //Set up the new lamport clock of the message
-                m->setLamportClock(lamportClock);
-                //Sending to the remote update answer gate, such that the remote write protocol can finish processing the request
-                send(m->dup(), "outAnswer", RU_OUT_GATE);
-                //We update our last processed lamport clock
-                //lcLastMsgSent = m->getLamportClock();
-                msgToDelete[msgID] = true;
-                //We delete the reference to the local message, because we always have been sent a duplication
-                delete m;
+            //We re-try
+            else{
+                // Retrieving the state of the acks of the current msg
+                std::vector<bool> acks = it->second;
+                //For validating if we already have ALL acks from all the replicas in the system
+                bool okToSend = true;
+                //The size of the acks
+                int size = acks.size();
+                //We check if we have received all the acks of the current message (msgID)
+                for (int i = 0; i < size; i++) {
+                    //Retrieving the state of the ack on the replica i
+                    bool acki = acks[i];
+                    // check if we already received the ACK or not, if not then we resend the reques
+                    if (!acki) { // false
+                       okToSend = false;
+                       //Outgoing msg
+                       SystemMsg* outgoingm= m->dup();
+                       //Set up the new lamport clock of the message
+                       outgoingm->setLamportClock(lamportClock);
+                       //Set up the reply code as -1
+                       outgoingm->setReplyCode(NO_REPLY_CODE);
+                       //Put as another color the retry of a multicast
+                       outgoingm->setKind(5);
+                       //We put the current replica as the sender of the message
+                       outgoingm->setReplicaID(myReplicaID);
+                       //Sending the message again
+                       send(outgoingm, "outReplicas", i);
+                       }
+                }
+                //If all acks has been received for the current message (msgID)
+                if (okToSend) {
+                    //Sending to the remote update answer gate, such that the remote write protocol can finish processing the request
+                    send(m->dup(), "outAnswer", RU_OUT_GATE);
+                    //We update our last processed lamport clock
+                    //lcLastMsgSent = m->getLamportClock();
+                    msgToDelete[msgID] = true;
+                    //We delete the reference to the local message, because we always have been sent a duplication
+                    delete m;
+                }
+              //we updte the retries done
+               multicastRetries[msgID]++;
             }
         }
         //We delete the messages that already received all the acks
@@ -368,6 +458,8 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                msgsWaitingForAck.erase(msgID);
                //We delete the message id from the vector of the messages to which we need to check the acks state
                msgsAck.erase(msgID);
+               //We delete the retries
+               multicastRetries.erase(msgID);
             }
         }
         //While there are messages waiting for acks, we need to keep having a timer for checking the acks of that mesasge
@@ -379,48 +471,143 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
         }
     }
+    //Checking the state of a remote write request
+    else if(msg == timeToCheckRemoteRequests)
+    {
+        //We go through the state of the remote requests sent by the current replica
+        std::map<long, bool>::iterator rmtIt =remoteReqState.begin();
+        while (rmtIt != remoteReqState.end())
+        {
+            //We recover the tree id of the message
+            long msgTreeID = rmtIt->first;
+            //We check how many retries have been done
+            int nRetries  = remoteRequestRetries[msgTreeID];
+            //We recover the associated message
+            SystemMsg* sMsg = remoteRequests[msgTreeID];
+            //Did we received an answer of a remote request?
+            bool state = rmtIt->second;
+            //We have received an answer of the involved remote write request
+            if(state)
+            {
+                delete sMsg;
+                remoteRequests.erase(msgTreeID);
+                remoteRequestRetries.erase(msgTreeID);
+                remoteReqState.erase(rmtIt++);
+            }
+            //We havent received an answer then we retry if we havent reached the maximum retries number
+            else{
+                //We prepare the outgoing message
+                 SystemMsg* outgoingmsg = sMsg->dup();
+                 //Updating the lamport clock
+                 outgoingmsg->setLamportClock(lamportClock);
+                //Checking if the maximum retries have happened
+                if(nRetries >= remoteRequestMaxRetries)
+                {
+                    //We recover the client involved on the message
+                    int msgClientID = sMsg->getClientID();
+
+                    outgoingmsg->setReplyCode(FAIL);
+                    //We send a failure message to the client
+                    send(outgoingmsg, "outClients", msgClientID);
+                    //We cleant our maps
+                    delete sMsg;
+                    remoteRequests.erase(msgTreeID);
+                    remoteRequestRetries.erase(msgTreeID);
+                    remoteReqState.erase(rmtIt++);
+                }
+                //We have still more retries
+                else{
+                    //We recover the owner
+                    int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
+                    //We prepare the outgoing message
+                     outgoingmsg->setKind(6);
+                    //We send the msg to the owner of the data item
+                     send(outgoingmsg, "outReplicas", msgReplicaOwnerID);
+                     //We update our number of retries
+                     remoteRequestRetries[msgTreeID]++;
+                    //We update our iterator
+                    ++rmtIt;
+                }
+
+            }
+        }
+        //If we have more pending remote request writes
+        //Scheduling the timer
+        if(!remoteRequests.empty()){
+            if (timeToCheckRemoteRequests->isScheduled()) {
+                cancelEvent(timeToCheckRemoteRequests);
+            }
+            else {
+                scheduleAt(simTime() + exponential(crrTimerOffset), timeToCheckRemoteRequests);
+            }
+        }
+
+    }
     // all other time constants that we received any msgs that we don't process
     else {
-        SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
-        //We update our local lamport clock
-        lamportClockHandle(sMsg);
-        int msgLamportClk = sMsg->getLamportClock();
-        int msgGateID = sMsg->getArrivalGateId();
-        int msgClientID = sMsg->getClientID();
-        int msgReplicaID = sMsg->getReplicaID();
-        int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
+        // check for bit error rate
+//        bool ber;
+//        ber = check_and_cast<cPacket*>(msg)->hasBitError();
+//        if (ber) {  // the msg has bit error rate, we'll delete it
+//            bubble("Msg has bit error!\nDeleting it!");
+//            delete msg;
+//        }
+//        else {  // the msg doesnt have bit error rate, process
 
-        //Messages outgoing from the replica
-        if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
-                msgGateID == findGate("inRemoteRequests", RU_IN_GATE) ||
-                msgGateID == findGate("inAnswer")) {
-            //We set up the the timestamp of the outgoing message
-            sMsg->setLamportClock(lamportClock);
-            //We save a duplication of the message such that we have the memory control in the current replica
-            outQueue.push_back(sMsg->dup());
-        }
-        //Message comes from a client to a replica
-        //TODO: add logic here
-        else if ((msgClientID != -1) && (msgReplicaID == -1) && (msgReplicaOwnerID == -1)) {
-            inQueue.push_back(sMsg->dup());
-            orderInQueue();
-        }
-        //Messages incoming to the replica
-        else {
-            // incoming msg has lamport clock ealier than already sent-out-msgs for processing inside
-           if (msgLamportClk < lcLastMsgSent) {
-               sMsg->setReplyCode(FAIL);
-               // this is fail, so put it in the outQueue
-               sMsg->setLamportClock(lamportClock);
-               //We save a duplication of the message such that we have the memory control in the current replica
-               outQueue.push_back(sMsg->dup());
-           }
-           //incoming msg has lamport clock later than lcLastMsgSent
-           else{
+            SystemMsg* sMsg = check_and_cast<SystemMsg*>(msg);
+
+            //We update our local lamport clock
+//            lamportClockHandle(sMsg);
+            int msgLamportClk = sMsg->getLamportClock();
+            int msgGateID = sMsg->getArrivalGateId();
+            int msgClientID = sMsg->getClientID();
+            int msgReplicaID = sMsg->getReplicaID();
+            int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
+
+            //Messages outgoing from the replica
+            if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
+                    msgGateID == findGate("inRemoteRequests", RU_IN_GATE) ||
+                    msgGateID == findGate("inAnswer")) {
+                //We set up the the timestamp of the outgoing message
+//                sMsg->setLamportClock(lamportClock);
+                //We save a duplication of the message such that we have the memory control in the current replica
+                outQueue.push_back(sMsg->dup());
+
+            }
+            //Message comes from a client to a replica
+            //TODO: add logic here
+            else if ((msgClientID != -1) && (msgReplicaID == -1) && (msgReplicaOwnerID == -1)) {
+                //We update our local lamport clock because a new msg has arrived to the current replica
+                lamportClockHandle(sMsg);
+                //We put it on the input queue
                 inQueue.push_back(sMsg->dup());
+                //We order the queue by the timestamp of the message
                 orderInQueue();
+            }
+            //Messages incoming to the replica
+            else {
+                //We update our local lamport clock because a new msg has arrived to the current replica
+                lamportClockHandle(sMsg);
+                // incoming msg has lamport clock ealier than already sent-out-msgs for processing inside
+               if (msgLamportClk < lcLastMsgSent) {
+                   bubble("Msg lc is to young!");
+                   //We set up as fail the message
+                   sMsg->setReplyCode(FAIL);
+                   // this is fail, so put it in the outQueue
+                   sMsg->setLamportClock(lamportClock);
+                   //We save a duplication of the message such that we have the memory control in the current replica
+                   outQueue.push_back(sMsg->dup());
+               }
+               //incoming msg has lamport clock later than lcLastMsgSent and
+               //therefore it should be processed inside the replica
+               else{
+                   inQueue.push_back(sMsg->dup());
+                   orderInQueue();
+               }
            }
-        }
+           //We delete the original message from the client
+           delete sMsg;
+//        }
     }
 }
 //TODO Implement a smarter way of ordering

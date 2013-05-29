@@ -75,10 +75,16 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
         //if is a rollback of a just created data item, then we will need to delete it
         else if(msgOperationID == DELETE && msgReplyCode == SUCCESS)
         {
+            //We answer the execution of the write as failed
+            sMsg->setReplyCode(FAIL);
+            //We send back the answer to the requester
+            send(msg, "out", IM_OUT_GATE);
+            /*OLD CODE
             //We keep the operation DELETE
              sMsg->setOperation(DELETE);
              //We delete the data item
              send(msg, "out", DIM_OUT_GATE);
+             */
         }
         //If the message through the network was successfully sent and executed on the other replicas
         else if(msgOperationID == COMMIT && msgReplyCode == SUCCESS)
@@ -118,8 +124,6 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
                   if(msgReplicaID != NO_REPLICA && msgReplicaID!= replicaID){
                       //We set up a reply code for noticing that the msg should go to the client
                       sMsg->setReplyCode(SUCCESS);
-                      //We set up the replica code to -1
-                      //sMsg->setReplicaOwnerID(NO_REPLY_CODE);
                   }
                   else{
                       //We set up a reply code for noticing that the msg should go to the client
@@ -163,6 +167,9 @@ void RemoteWriteProtocol::handleMessage(cMessage *msg)
     }
     //We receive an answer from a replica to which we requested a remote write
      else if(gateID== gate("in",RW_IN_GATE)->getId()){
+             //we change the sender to -1
+             sMsg->setReplicaID(-1);
+             //We send out to the invocation manager
              send(sMsg, "out", IM_OUT_GATE);
      }
     //We receive an update message answer from the whole replicas, this is validated by the

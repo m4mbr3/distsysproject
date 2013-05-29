@@ -44,6 +44,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/application/AppMsgGenerator.o \
     $O/application/Application.o \
+    $O/application/AppMsgGenerator.o \
     $O/concurrency/DistMutualExclusion.o \
     $O/failure/ClientReincarnation.o \
     $O/invocation/InvocationManager.o \
