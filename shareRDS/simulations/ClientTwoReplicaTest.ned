@@ -28,7 +28,6 @@ network ClientTwoReplicaTest
         int cID = 0;
         string ReplicaIDs = "0 1";
         int localClock = 0;
-        @display("bgb=918,444;bgl=2");
     submodules:
         client: Client {
             clientID = cID;
@@ -44,7 +43,6 @@ network ClientTwoReplicaTest
             pTimerOffset = 2.0;
             sTimerOffset = 3.0;
             cTimerOffset = 14.0;
-            @display("p=194,70");
             @display("p=736,171");
         }
         replica1: Replica {

@@ -56,7 +56,6 @@ network Network
             sTimerOffset = 3.0;
             cTimerOffset = 14.0;
             @display("p=194,70");
-            @display("p=736,171");
         }
     connections allowunconnected:
         replica.outClients[0] --> client.inReplicas[0];
