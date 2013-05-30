@@ -121,6 +121,83 @@ void ReplicaNetwork::lamportClockHandle(SystemMsg *msg) {
     }
 }
 
+bool ReplicaNetwork::searchForMsgInQueue (int clientID,int replicaID, int replicaOwnerID, int replyCode, int operation, std::string dataID, int data, int queueType, int msgTreeId)
+{
+    bool result = false;
+
+    // rebuild a new systemMsg
+    SystemMsg* temp = new SystemMsg("temp");
+    temp->setClientID(clientID);
+    temp->setReplicaID(replicaID);
+    temp->setReplicaOwnerID(replicaOwnerID);
+    temp->setReplyCode(replyCode);
+    temp->setOperation(operation);
+    temp->setDataID(dataID.c_str());
+    temp->setData(data);
+
+    std::vector<SystemMsg*>::iterator it;
+    SystemMsg* m = NULL;
+
+    switch (queueType) {
+    case INPUT_QUEUE:
+        for (it = inQueue.begin(); it != inQueue.end(); it++) {
+            m = *it;
+            if (m->getTreeId() != msgTreeId)
+                continue;
+            else {
+                result = compareMsgs(m, temp);
+            }
+        }
+        break;
+    case OUTPUT_QUEUE:
+        for (it = outQueue.begin(); it != outQueue.end(); it++) {
+            m = *it;
+            if (m->getTreeId() != msgTreeId)
+                continue;
+            else {
+                result = compareMsgs(m, temp);
+            }
+        }
+        break;
+    case AUXMAP:
+        try {
+            m = auxMap.at(msgTreeId);
+            result = compareMsgs(m, temp);
+        } catch (std::exception& e) {
+        }
+        break;
+    default:
+        break;
+   }
+    delete temp;
+    return result;
+
+}
+
+bool ReplicaNetwork::compareMsgs(SystemMsg* m1, SystemMsg* m2) {
+    bool areEqual = true;
+    if (m1->getClientID() != m2->getClientID())
+        areEqual = false;
+    if (m1->getReplicaID() != m2->getReplicaID())
+        areEqual = false;
+    if(m1->getReplicaOwnerID() != m2->getReplicaOwnerID())
+        areEqual = false;
+    if (m1->getReplyCode() != m2->getReplyCode())
+        areEqual = false;
+    if (m1->getOperation() != m2->getOperation())
+        areEqual = false;
+    std::string s1 = m1->getDataID();
+    std::string s2 = m2->getDataID();
+    if (s1.compare(s2) != 0)
+        areEqual = false;
+    if(m1->getData() != m2->getData())
+        areEqual = false;
+//    if (m1->getTreeId() != m2->getTreeId())
+//        areEqual = false;
+
+    return areEqual;
+}
+
 void ReplicaNetwork::handleMessage(cMessage *msg)
 {
 
@@ -141,6 +218,11 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             std::string msgDataID = sMsg->getDataID();
             // retrieve the treeID of the msg because it won't change when cloning the msg
             int msgTreeID = sMsg->getTreeId();
+
+            delete auxMap[msgTreeID];
+            // save a duplicate of the msg into the auxMap
+            EV << "[" << myReplicaID << "] processing (treeID:"<<msgTreeID << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << msgReplyCode << ",ownerRepID:" << msgOwnerReplicaID << ",op:" << msgOperation << ")\n";
+            auxMap[msgTreeID] = sMsg->dup();
 
             // the incoming msg from another replica and it is an ACK answer of a RemoteUpdate from the current replica
             if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgOperation == ACK)) {
@@ -164,7 +246,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
 //                // then the received ACK is unknown, then DELETE it
                 if (delThisAck) {
                     bubble("Received unknown or already processed ACK!");
-                    delete msg;
+                    delete sMsg;
                 }
 //                // otherwise, process it
                 else {
@@ -312,6 +394,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             //We need to send a request for a write request to the owner of the data item (a remote replica)
            else if(msgReplicaOwnerID != myReplicaID && gateID == findGate("inRemoteRequests",RW_IN_GATE))
            {
+               // free the map
+               delete auxMap[msgTreeID];
+               // put the msg into the map
+               auxMap[msgTreeID] = sMsg->dup();
                //We send the msg to the owner of the data item
                 send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
                /*
@@ -333,6 +419,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
            }
             //incoming msg is an answer of a RemoteWrite request from a remote replica, we need to send it to the sender
             else if (msgReplicaID!=NO_REPLICA && msgReplicaID != myReplicaID && msgReplicaOwnerID == myReplicaID && gateID == findGate("inAnswer")){
+                // free the map
+                delete auxMap[msgTreeID];
+                // put the msg into the map
+                auxMap[msgTreeID] = sMsg->dup();
                 //We send the answer back to the sender
                 send(sMsg->dup(), "outReplicas", msgReplicaID);
             }
@@ -343,22 +433,34 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 sMsg->setOperation(ACK);
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
+                // free the map
+                delete auxMap[msgTreeID];
+                // put the msg into the map
+                auxMap[msgTreeID] = outgoingMsg->dup();
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
-            //The msg is an answer of a RemoteUpdate request from the current replica and then we need to send it to the replicaOwnerID
+            //The msg is an answer of a RemoteUpdate request from the current replica to itself
             //In fact the replicaOwner on the message SHOULD be the same as the replica sender
             else if (msgReplicaID!=NO_REPLICA && msgReplicaID == myReplicaID && msgReplicaOwnerID == myReplicaID  && gateID == findGate("inAnswer") && msgReplyCode ==SUCCESS) {
                 //We set up the operation as an ACK
                 sMsg->setOperation(ACK);
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
+                // free the map
+                //delete auxMap[msgTreeID];
+                // put the msg into the map
+                //auxMap[msgTreeID] = outgoingMsg->dup();
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
             //We are processing a message that is an answer to a client request
            else {
                bubble("OUT TO CLIENT!");
+               // free the map
+               delete auxMap[msgTreeID];
+               // put the msg into the map
+               auxMap[msgTreeID] = sMsg->dup();
                send(sMsg->dup(), "outClients", msgClientID);
            }
             //We delete the message
@@ -417,6 +519,15 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     bool acki = acks[i];
                     // check if we already received the ACK or not, if not then we resend the reques
                     if (!acki) { // false
+                        // we should check that the missing ACK is not in the input queue
+                        bool ackInInputQueue = searchForMsgInQueue(m->getClientID(),i,myReplicaID, m->getReplyCode(), ACK, m->getDataID(), m->getData(), INPUT_QUEUE,msgID);
+                        //TODO:
+                        // test if we need to check outputQueue also because in that case, it means that we send the retry too soon
+
+                        if (ackInInputQueue) {
+                            continue;
+                        }
+
                        okToSend = false;
                        //Outgoing msg
                        SystemMsg* outgoingm= m->dup();
@@ -441,9 +552,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                     msgToDelete[msgID] = true;
                     //We delete the reference to the local message, because we always have been sent a duplication
                     delete m;
+                } else {
+                  //we updte the retries done
+                   multicastRetries[msgID]++;
                 }
-              //we updte the retries done
-               multicastRetries[msgID]++;
             }
         }
         //We delete the messages that already received all the acks
@@ -517,6 +629,16 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 }
                 //We have still more retries
                 else{
+                    // we need to check if the ack answer is in the inputQueue or not
+                    bool inQueueFlag = searchForMsgInQueue(sMsg->getClientID(),sMsg->getReplicaID(),sMsg->getReplicaOwnerID(),
+                                                        sMsg->getReplyCode(), WRITE, sMsg->getDataID(), sMsg->getData(), INPUT_QUEUE, msgTreeID);
+                    //TODO:
+                    // test if we need to check outputQueue also because in that case, it means that we send the retry too soon
+
+                    if (inQueueFlag) {
+                        continue;
+                    }
+
                     //We recover the owner
                     int msgReplicaOwnerID = sMsg->getReplicaOwnerID();
                     //We prepare the outgoing message
@@ -571,6 +693,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 //We set up the the timestamp of the outgoing message
 //                sMsg->setLamportClock(lamportClock);
                 //We save a duplication of the message such that we have the memory control in the current replica
+                EV << "[" << myReplicaID << "] To outQueue:(treeID:"<<sMsg->getTreeId() << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << sMsg->getReplyCode() << ",ownerRepID:" << sMsg->getReplicaOwnerID() << ",op:" << sMsg->getOperation() << ")\n";
                 outQueue.push_back(sMsg->dup());
 
             }
@@ -595,14 +718,34 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                    sMsg->setReplyCode(FAIL);
                    // this is fail, so put it in the outQueue
                    sMsg->setLamportClock(lamportClock);
+                   EV << "[" << myReplicaID << "] To outQueue:(treeID:"<<sMsg->getTreeId() << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << sMsg->getReplyCode() << ",ownerRepID:" << sMsg->getReplicaOwnerID() << ",op:" << sMsg->getOperation() << ")\n";
                    //We save a duplication of the message such that we have the memory control in the current replica
                    outQueue.push_back(sMsg->dup());
                }
                //incoming msg has lamport clock later than lcLastMsgSent and
                //therefore it should be processed inside the replica
                else{
-                   inQueue.push_back(sMsg->dup());
-                   orderInQueue();
+                   bool inInputQueueFlag = searchForMsgInQueue(msgClientID,
+                        msgReplicaID, msgReplicaOwnerID, sMsg->getReplyCode(),
+                        sMsg->getOperation(), sMsg->getDataID(), sMsg->getData(), INPUT_QUEUE,
+                        sMsg->getTreeId());
+
+                   bool inOutputQueueFlag = searchForMsgInQueue(msgClientID,
+                                           msgReplicaID, msgReplicaOwnerID, sMsg->getReplyCode(),
+                                           sMsg->getOperation(), sMsg->getDataID(), sMsg->getData(), OUTPUT_QUEUE,
+                                           sMsg->getTreeId());
+
+                   bool inAuxMapFlag = searchForMsgInQueue(msgClientID,
+                                                              msgReplicaID, msgReplicaOwnerID, sMsg->getReplyCode(),
+                                                              sMsg->getOperation(), sMsg->getDataID(), sMsg->getData(), AUXMAP,
+                                                              sMsg->getTreeId());
+                   EV << "[" << myReplicaID << "] MsgTreeId "<< sMsg->getTreeId()<<" : flags: input:" << inInputQueueFlag << ",output:" << inOutputQueueFlag << ",aux:" <<inAuxMapFlag << "\n";
+                   if (!inInputQueueFlag && !inOutputQueueFlag && !inAuxMapFlag) {
+
+                       EV << "[" << myReplicaID << "] To inputQueue:(treeID:"<<sMsg->getTreeId() << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << sMsg->getReplyCode() << ",ownerRepID:" << sMsg->getReplicaOwnerID() << ",op:" << sMsg->getOperation() << ")\n";
+                       inQueue.push_back(sMsg->dup());
+                       orderInQueue();
+                   }
                }
            }
            //We delete the original message from the client

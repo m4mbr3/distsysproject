@@ -38,70 +38,78 @@
 #define NO_REPLY_CODE -1
 #define NO_REPLICA -1
 
+// queue type
+#define INPUT_QUEUE 0
+#define OUTPUT_QUEUE 1
+#define AUXMAP 2
 
+class ReplicaNetwork: public cSimpleModule {
+private:
+    //ID of the running replica module
+    int myReplicaID;
+    // scalar clock ~ lamportClock
+    int lamportClock;
+    // timestamp of the last processed msg on the replica such that we can accept or reject incoming requests
+    int lcLastMsgSent;
 
-class ReplicaNetwork : public cSimpleModule
-{
-    private:
-        //ID of the running replica module
-        int myReplicaID;
-        // scalar clock ~ lamportClock
-        int lamportClock;
-        // timestamp of the last processed msg on the replica such that we can accept or reject incoming requests
-        int lcLastMsgSent;
+    //MANAGING THE MULTICAST
+    // Queue for managing the acks that are being waited as answers for a remote update sent out from this replica
+    std::map<long, std::vector<bool> > msgsAck;
+    //The messages for which we should take care of the acks
+    std::map<long, SystemMsg*> msgsWaitingForAck;
+    //The number of retries that have been done for a multicast message
+    std::map<long, int> multicastRetries;
+    //The maximum number of retries for multicast messages
+    int multicastMaxRetries;
 
-        //MANAGING THE MULTICAST
-        // Queue for managing the acks that are being waited as answers for a remote update sent out from this replica
-        std::map<long, std::vector<bool> > msgsAck;
-        //The messages for which we should take care of the acks
-        std::map<long, SystemMsg*> msgsWaitingForAck;
-        //The number of retries that have been done for a multicast message
-        std::map<long,int> multicastRetries;
-        //The maximum number of retries for multicast messages
-        int multicastMaxRetries;
+    //MANAGING THE INCOMING AND OUTGOING MESSAGES
+    // queue for requests that are received from outside and in queue for processing
+    // those are msgs from Clients, from Replicas requests or Replicas answers
+    std::vector<SystemMsg*> inQueue;
+    // queue for requests that are in queue for sending out
+    std::vector<SystemMsg*> outQueue;
+    // a map for msg that are being processed or have been processed
+    std::map<long, SystemMsg*> auxMap;
 
-        //MANAGING THE INCOMING AND OUTGOING MESSAGES
-        // queue for requests that are received from outside and in queue for processing
-        // those are msgs from Clients, from Replicas requests or Replicas answers
-        std::vector<SystemMsg*> inQueue;
-        // queue for requests that are in queue for sending out
-        std::vector<SystemMsg*> outQueue;
+    //MANAGING THE REMOTE REQUESTS STATE
+    //The remote request from which we are expecting an answer
+    std::map<long, SystemMsg*> remoteRequests;
+    //The remote request state (if it havent been answer)
+    std::map<long, bool> remoteReqState;
+    //The number of retries for re-sending a remote write
+    std::map<long, int> remoteRequestRetries;
+    //The maximum number of retries for multicast messages
+    int remoteRequestMaxRetries;
 
-        //MANAGING THE REMOTE REQUESTS STATE
-        //The remote request from which we are expecting an answer
-        std::map <long, SystemMsg*> remoteRequests;
-        //The remote request state (if it havent been answer)
-        std::map<long, bool> remoteReqState;
-        //The number of retries for re-sending a remote write
-        std::map<long, int> remoteRequestRetries;
-        //The maximum number of retries for multicast messages
-        int remoteRequestMaxRetries;
+    //SELF MESSAGES
+    //A self msg to trigger queuing process overtime
+    cMessage *timeToProcessRequest;
+    //A self msg to trigger sending out msg overtime
+    cMessage *timeToSendOutRequest;
+    //A self msg to trigger checking out ack msgs overtime
+    cMessage *timeToCheckAcks;
+    //A self msg to trigger checking if a remote request has been answer
+    cMessage *timeToCheckRemoteRequests;
+    //TIMERS OFFSETS
+    double pTimerOffset;
+    double sTimerOffset;
+    double caTimerOffset;
+    double crrTimerOffset;
+    //Update the local lamport clock of the replica
+    void lamportClockHandle(SystemMsg *msg);
+    //Order the replica messages in the inQueue
+    void orderInQueue();
+    // search for a message to see if it is in inputQueue/outputQueue or not
+    bool searchForMsgInQueue (int clientID,int replicaID, int replicaOwnerID, int replyCode, int operation, std::string dataID, int data, int queueType, int msgTreeId);
+    // compare any 2  systemMsg. return true if equals
+    bool compareMsgs(SystemMsg* m1, SystemMsg* m2);
+public:
+    ReplicaNetwork();
+    virtual ~ReplicaNetwork();
 
-        //SELF MESSAGES
-        //A self msg to trigger queuing process overtime
-        cMessage *timeToProcessRequest;
-        //A self msg to trigger sending out msg overtime
-        cMessage *timeToSendOutRequest;
-        //A self msg to trigger checking out ack msgs overtime
-        cMessage *timeToCheckAcks;
-        //A self msg to trigger checking if a remote request has been answer
-        cMessage *timeToCheckRemoteRequests;
-        //TIMERS OFFSETS
-        double pTimerOffset;
-        double sTimerOffset;
-        double caTimerOffset;
-        double crrTimerOffset;
-        //Update the local lamport clock of the replica
-        void lamportClockHandle(SystemMsg *msg);
-        //Order the replica messages in the inQueue
-        void orderInQueue();
-    public:
-        ReplicaNetwork();
-        virtual ~ReplicaNetwork();
-
-    protected:
-        virtual void initialize();
-        virtual void handleMessage(cMessage *msg);
+protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
 };
 
 #endif

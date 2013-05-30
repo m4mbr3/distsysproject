@@ -40,7 +40,7 @@ EXECUTE_ON_STARTUP(
     e->insert(UPDATE, "UPDATE");
     e->insert(ACK, "ACK");
     e->insert(DELETE, "DELETE");
-    e->insert(REINCAR, "REINCAR");
+    e->insert(REINC, "REINC");
 );
 
 EXECUTE_ON_STARTUP(

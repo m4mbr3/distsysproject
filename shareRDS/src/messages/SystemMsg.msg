@@ -24,7 +24,7 @@ ROLLBACK=3;
 UPDATE = 4;
 ACK = 5;
 DELETE = 6;
-REINCAR=7;
+REINC = 7;
 };
 //Reply code enum
 enum ReplyCodeType{
