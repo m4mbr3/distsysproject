@@ -27,10 +27,13 @@ ReplicaNetwork::ReplicaNetwork()
     timeToSendOutRequest = NULL;
     timeToCheckAcks = NULL;
     timeToCheckRemoteRequests = NULL;
+    timeToCheckTTL = NULL;
     multicastMaxRetries = -1;
     remoteRequestMaxRetries =-1;
     lamportClock = 0;
     lcLastMsgSent = lamportClock;
+    ttlTimerOffset = -1;
+    ttlWindow = -1;
 }
 
 ReplicaNetwork::~ReplicaNetwork()
@@ -63,6 +66,7 @@ ReplicaNetwork::~ReplicaNetwork()
     cancelAndDelete(timeToProcessRequest);
     cancelAndDelete(timeToCheckAcks);
     cancelAndDelete(timeToCheckRemoteRequests);
+    cancelAndDelete(timeToCheckTTL);
 }
 
 void ReplicaNetwork::initialize()
@@ -98,6 +102,14 @@ void ReplicaNetwork::initialize()
     crrTimerOffset = par("checkRemoteReqTimerOffset").doubleValue();
     //We create the self message (timer) for checking the stat of a remote requests
     timeToCheckRemoteRequests = new cMessage("checkRemoteReqTimer");
+
+    //Configuring the timer for checking ttl of a msg
+    ttlTimerOffset = par("checkMsgTTL").doubleValue();
+    // Create the self msg (timer) for checking the ttl of a msg
+    timeToCheckTTL = new cMessage("checkTTLTimer");
+    // initialize the window size
+    ttlWindow = par("ttlWindow");
+    scheduleAt(simTime() + exponential(ttlTimerOffset), timeToCheckTTL);
 
     //Recovering the maximum number of retries for multicast and remote request messages
     multicastMaxRetries = par("multicastMaxTries");
@@ -140,8 +152,11 @@ bool ReplicaNetwork::searchForMsgInQueue (int clientID,int replicaID, int replic
 
     switch (queueType) {
     case INPUT_QUEUE:
-        for (it = inQueue.begin(); it != inQueue.end(); it++) {
+        for (it = inQueue.begin(); it != inQueue.end() && !result; it++) {
+
             m = *it;
+            EV << "[" << myReplicaID << "] inputQueue data: (treeID:"<<m->getTreeId() << ",clientID:" << m->getClientID() << ",replicaID:" << m->getReplicaID() << ",replyCode:" << m->getReplyCode() << ",ownerRepID:" << m->getReplicaOwnerID() << ",op:" << m->getOperation() << ")\n";
+
             if (m->getTreeId() != msgTreeId)
                 continue;
             else {
@@ -162,7 +177,18 @@ bool ReplicaNetwork::searchForMsgInQueue (int clientID,int replicaID, int replic
     case AUXMAP:
         try {
             m = auxMap.at(msgTreeId);
-            result = compareMsgs(m, temp);
+            bool foundMsg = compareMsgs(m, temp);
+            if (foundMsg) {
+                int timerOffset = m->getLamportClock() + ttlWindow - lamportClock;
+                if (timerOffset >= 0) {
+                    result = false;
+                }
+                else {
+                    delete m;
+                    auxMap.erase(msgTreeId);
+                    result = true;
+                }
+            }
         } catch (std::exception& e) {
         }
         break;
@@ -201,7 +227,9 @@ bool ReplicaNetwork::compareMsgs(SystemMsg* m1, SystemMsg* m2) {
 void ReplicaNetwork::handleMessage(cMessage *msg)
 {
 
-    // Time to start processing the messages saved in the inQueue
+    /**************************************************************************************
+     * Time to start processing the messages saved in the inQueue
+     **************************************************************************************/
     if (msg == timeToProcessRequest) {
         int size = inQueue.size();
         for (int i = 0; i < size; i++) {
@@ -219,10 +247,13 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             // retrieve the treeID of the msg because it won't change when cloning the msg
             int msgTreeID = sMsg->getTreeId();
 
-            delete auxMap[msgTreeID];
-            // save a duplicate of the msg into the auxMap
-            EV << "[" << myReplicaID << "] processing (treeID:"<<msgTreeID << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << msgReplyCode << ",ownerRepID:" << msgOwnerReplicaID << ",op:" << msgOperation << ")\n";
-            auxMap[msgTreeID] = sMsg->dup();
+            if (msgOperation != ACK) {
+                delete auxMap[msgTreeID];
+                // save a duplicate of the msg into the auxMap
+                EV << "[" << myReplicaID << "] processing (treeID:"<<msgTreeID << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << msgReplyCode << ",ownerRepID:" << msgOwnerReplicaID << ",op:" << msgOperation << ")\n";
+                auxMap[msgTreeID] = sMsg->dup();
+
+            }
 
             // the incoming msg from another replica and it is an ACK answer of a RemoteUpdate from the current replica
             if ((gateID == findGate("inReplicas", msgReplicaID)) && (msgOperation == ACK)) {
@@ -284,7 +315,7 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 remoteReqState[msgTreeID] = true;
 
             }
-            //The incoming msg is a remote update request from another replica
+            //The incoming msg is a remote update request from any of the replicas
             else if (gateID == findGate("inReplicas", msgReplicaID) && msgReplicaID == msgOwnerReplicaID && msgReplyCode == NO_REPLY_CODE){
                 send(sMsg->dup(), "outRequest");
                 //We update the timestamp of the last message processed
@@ -317,7 +348,11 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         //we schedule again the processing timer
         scheduleAt(simTime() + exponential(pTimerOffset),timeToProcessRequest);
     }
-    //Time to start processing the requests that are in the outqueue
+
+
+    /**************************************************************************************
+    * Time to start processing the requests that are in the outqueue
+    **************************************************************************************/
     else if (msg == timeToSendOutRequest) {
         int size = outQueue.size();
         for (int i = 0; i < size; i++) {
@@ -394,10 +429,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             //We need to send a request for a write request to the owner of the data item (a remote replica)
            else if(msgReplicaOwnerID != myReplicaID && gateID == findGate("inRemoteRequests",RW_IN_GATE))
            {
-               // free the map
-               delete auxMap[msgTreeID];
-               // put the msg into the map
-               auxMap[msgTreeID] = sMsg->dup();
+//               // free the map
+//               delete auxMap[msgTreeID];
+//               // put the msg into the map
+//               auxMap[msgTreeID] = sMsg->dup();
                //We send the msg to the owner of the data item
                 send(sMsg->dup(), "outReplicas", msgReplicaOwnerID);
                /*
@@ -419,10 +454,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
            }
             //incoming msg is an answer of a RemoteWrite request from a remote replica, we need to send it to the sender
             else if (msgReplicaID!=NO_REPLICA && msgReplicaID != myReplicaID && msgReplicaOwnerID == myReplicaID && gateID == findGate("inAnswer")){
-                // free the map
-                delete auxMap[msgTreeID];
-                // put the msg into the map
-                auxMap[msgTreeID] = sMsg->dup();
+//                // free the map
+//                delete auxMap[msgTreeID];
+//                // put the msg into the map
+//                auxMap[msgTreeID] = sMsg->dup();
                 //We send the answer back to the sender
                 send(sMsg->dup(), "outReplicas", msgReplicaID);
             }
@@ -433,10 +468,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                 sMsg->setOperation(ACK);
                 //We send a duplicate of the current message
                 SystemMsg* outgoingMsg = sMsg->dup();
-                // free the map
-                delete auxMap[msgTreeID];
-                // put the msg into the map
-                auxMap[msgTreeID] = outgoingMsg->dup();
+//                // free the map
+//                delete auxMap[msgTreeID];
+//                // put the msg into the map
+//                auxMap[msgTreeID] = outgoingMsg->dup();
                 //We send the msg to the owner of the data item that has requested the update of the variable
                 send(outgoingMsg, "outReplicas", msgReplicaOwnerID);
             }
@@ -457,10 +492,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             //We are processing a message that is an answer to a client request
            else {
                bubble("OUT TO CLIENT!");
-               // free the map
-               delete auxMap[msgTreeID];
-               // put the msg into the map
-               auxMap[msgTreeID] = sMsg->dup();
+//               // free the map
+//               delete auxMap[msgTreeID];
+//               // put the msg into the map
+//               auxMap[msgTreeID] = sMsg->dup();
                send(sMsg->dup(), "outClients", msgClientID);
            }
             //We delete the message
@@ -471,7 +506,11 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         //Rescheduling the time to process the outqueue
          scheduleAt(simTime() + exponential(sTimerOffset), timeToSendOutRequest);
     }
-    //Checking the acks of a message
+
+
+    /**************************************************************************************
+    * Checking the acks of a message
+    **************************************************************************************/
     else if (msg == timeToCheckAcks) {
         std::map<long, bool> msgToDelete;
         std::map<long, std::vector<bool> >::iterator it;
@@ -583,7 +622,10 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             scheduleAt(simTime() + exponential(caTimerOffset), timeToCheckAcks);
         }
     }
-    //Checking the state of a remote write request
+
+    /**************************************************************************************
+    * Checking the state of a remote write request
+    ***************************************************************************************/
     else if(msg == timeToCheckRemoteRequests)
     {
         //We go through the state of the remote requests sent by the current replica
@@ -665,7 +707,42 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
         }
 
     }
-    // all other time constants that we received any msgs that we don't process
+
+
+    /**************************************************************************************
+     * time to check the processing map for removing the msg with expired ttl
+     **************************************************************************************/
+    else if (msg == timeToCheckTTL) {
+        std::map<long, SystemMsg*>::iterator it =auxMap.begin();
+        while(it != auxMap.end()) {
+            SystemMsg* m = it->second;
+            int lc = m->getLamportClock();
+            int liveTime = lc + ttlWindow;
+            if (liveTime <= lamportClock) {
+                //We cleant our maps
+                delete m;
+                auxMap.erase(it++);
+            }
+            else {
+                it++;
+            }
+        }
+        //If we have more pending remote request writes
+        //Scheduling the timer
+        if(!auxMap.empty()){
+            if (timeToCheckTTL->isScheduled()) {
+                cancelEvent(timeToCheckTTL);
+            }
+            else {
+                scheduleAt(simTime() + exponential(ttlTimerOffset), timeToCheckTTL);
+            }
+        }
+    }
+
+
+    /**************************************************************************************
+    * in the case we are receiving something incoming or msg that should go out
+    ***************************************************************************************/
     else {
         // check for bit error rate
 //        bool ber;
@@ -690,8 +767,6 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
             if (msgGateID == findGate("inRemoteRequests", RW_IN_GATE) ||
                     msgGateID == findGate("inRemoteRequests", RU_IN_GATE) ||
                     msgGateID == findGate("inAnswer")) {
-                //We set up the the timestamp of the outgoing message
-//                sMsg->setLamportClock(lamportClock);
                 //We save a duplication of the message such that we have the memory control in the current replica
                 EV << "[" << myReplicaID << "] To outQueue:(treeID:"<<sMsg->getTreeId() << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << sMsg->getReplyCode() << ",ownerRepID:" << sMsg->getReplicaOwnerID() << ",op:" << sMsg->getOperation() << ")\n";
                 outQueue.push_back(sMsg->dup());
@@ -739,7 +814,9 @@ void ReplicaNetwork::handleMessage(cMessage *msg)
                                                               msgReplicaID, msgReplicaOwnerID, sMsg->getReplyCode(),
                                                               sMsg->getOperation(), sMsg->getDataID(), sMsg->getData(), AUXMAP,
                                                               sMsg->getTreeId());
+
                    EV << "[" << myReplicaID << "] MsgTreeId "<< sMsg->getTreeId()<<" : flags: input:" << inInputQueueFlag << ",output:" << inOutputQueueFlag << ",aux:" <<inAuxMapFlag << "\n";
+
                    if (!inInputQueueFlag && !inOutputQueueFlag && !inAuxMapFlag) {
 
                        EV << "[" << myReplicaID << "] To inputQueue:(treeID:"<<sMsg->getTreeId() << ",clientID:" << msgClientID << ",replicaID:" << msgReplicaID << ",replyCode:" << sMsg->getReplyCode() << ",ownerRepID:" << sMsg->getReplicaOwnerID() << ",op:" << sMsg->getOperation() << ")\n";

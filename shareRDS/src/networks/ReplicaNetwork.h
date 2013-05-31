@@ -51,6 +51,8 @@ private:
     int lamportClock;
     // timestamp of the last processed msg on the replica such that we can accept or reject incoming requests
     int lcLastMsgSent;
+    // window size for ttl of a msg
+    int ttlWindow;
 
     //MANAGING THE MULTICAST
     // Queue for managing the acks that are being waited as answers for a remote update sent out from this replica
@@ -90,11 +92,16 @@ private:
     cMessage *timeToCheckAcks;
     //A self msg to trigger checking if a remote request has been answer
     cMessage *timeToCheckRemoteRequests;
+    // a ttl of a msg that has been processed
+    cMessage *timeToCheckTTL;
+
     //TIMERS OFFSETS
     double pTimerOffset;
     double sTimerOffset;
     double caTimerOffset;
     double crrTimerOffset;
+    double ttlTimerOffset;
+
     //Update the local lamport clock of the replica
     void lamportClockHandle(SystemMsg *msg);
     //Order the replica messages in the inQueue
