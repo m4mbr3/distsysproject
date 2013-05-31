@@ -18,10 +18,11 @@ Define_Module(ClientReincarnation);
 void ClientReincarnation::initialize()
 {
     clientID = par("clientID");
+    willfail = par("willfail");
     reinc = new SystemMsg();
     reinc->setReplyCode(0);
-    //if (willfail)
-    scheduleAt(simTime()+ intuniform(0,400),reinc);
+    if (willfail)
+        scheduleAt(simTime()+ intuniform(0,400),reinc);
 }
 
 void ClientReincarnation::handleMessage(cMessage *msg)

@@ -11,7 +11,7 @@
 // 
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
-// 
+// https://guest.polimi.it/login.html?redirect=corsi.dei.polimi.it/distsys
 
 package sharerds.simulations.ClientSimulation;
 import sharerds.compmodules.Client;
@@ -32,6 +32,7 @@ network Network1
         string ReplicaIDs = "0 1";
         int localClock = 0;
         bool is_large = false;
+        bool willfail = true;
         @display("bgb=376,313;bgl=9");
     types:
         channel Unnamed
@@ -45,6 +46,7 @@ network Network1
             numberReplicas = numberReplicas;
             localClock = localClock;
             is_large = is_large;
+            willfail = willfail;
             @display("p=108,215");
         }
         client1: Client {
@@ -52,6 +54,7 @@ network Network1
             ReplicaIDs = ReplicaIDs;
             numberReplicas = numberReplicas;
             localClock = localClock;
+            willfail = willfail;
             @display("p=256,50");
         }
         replica: Replica {
