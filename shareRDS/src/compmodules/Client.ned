@@ -18,8 +18,8 @@ module Client
         string ReplicaIDs;
         int replicaID = default(0);
         int localClock = default(0);
-        bool is_large = default (true);
-        bool willfail = default (true);
+        bool is_large = default(true);
+        bool willfail = default(true);
         @display("bgb=1019,568;bgl=2");
     gates:
         input inReplicas[numberReplicas+2];
@@ -35,12 +35,12 @@ module Client
             parameters:
                 clientID = clientID;
                 is_large = is_large;
-                @display("p=175,28");
+                @display("p=221,29;i=block/app");
         }
         invocationManager: InvocationManager {
             parameters:
                 entityID = clientID;
-                @display("p=221,120");
+                @display("p=221,120;i=block/layer");
         }
         replicaGroupManager: ReplicaGroupManager {
             parameters:
@@ -49,18 +49,18 @@ module Client
                 replicaID = replicaID;
                 numberReplicas = numberReplicas+2;
                 willfail = willfail;
-                @display("p=221,199");
+                @display("p=383,175;i=block/classifier");
         }
         writeAhead: WriteAheadLog {
             parameters:
                 replicaID = clientID;
-                @display("p=126,266");
+                @display("p=534,77;i=block/blackboard");
         }
         clientReincarnation: ClientReincarnation {
             parameters:
                 clientID = clientID;
                 willfail = willfail;
-                @display("p=297,266");
+                @display("p=547,241;i=block/control");
         }
         clientNetwork: ClientNetwork {
             parameters:
@@ -72,11 +72,11 @@ module Client
         }
 
         basicNetwork: BasicNetwork {
-            @display("p=193,329;is=l");
+            @display("p=240,293;i=block/network");
         }
         lamport: LamportClockClient {
             localClock = localClock;
-            @display("p=473,399");
+            @display("p=473,399;i=block/timer");
         }
 
     connections allowunconnected:

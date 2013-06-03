@@ -35,9 +35,9 @@ network Network
         int cID = 0;
         string ReplicaIDs = "0";
         int localClock = 0;
-        
+
     submodules:
-        
+
         client: Client {
             clientID = cID;
             ReplicaIDs = ReplicaIDs;
@@ -45,9 +45,9 @@ network Network
             localClock = localClock;
             willfail = true;
             is_large = false;
-            @display("p=388,192");
+            @display("p=388,192;i=device/pc");
         }
-        
+
         replica: Replica {
             rID = 0;
             numberReplicas = nReplicas;
@@ -60,6 +60,6 @@ network Network
     connections allowunconnected:
         replica.outClients[0] --> client.inReplicas[0];
         client.outReplicas[0] --> replica.inClients[0];
-        
+
 }
 

@@ -19,6 +19,7 @@ simple ClientNetwork
 {
     parameters:
         int clientID = default(-1);
+        @display("i=block/broadcast");
     gates:
         input inReplicas[];
         output outReplicas[];
