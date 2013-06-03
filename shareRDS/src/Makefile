@@ -42,8 +42,8 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc and .msg files
 OBJS = \
-    $O/application/Application.o \
     $O/application/AppMsgGenerator.o \
+    $O/application/Application.o \
     $O/concurrency/DistMutualExclusion.o \
     $O/failure/ClientReincarnation.o \
     $O/invocation/InvocationManager.o \
@@ -52,22 +52,22 @@ OBJS = \
     $O/networks/BasicNetwork.o \
     $O/networks/ClientNetwork.o \
     $O/networks/ReplicaNetwork.o \
-    $O/recovery/LogManager.o \
     $O/recovery/WriteAheadLog.o \
-    $O/replication/DataItemsManager.o \
+    $O/recovery/LogManager.o \
     $O/replication/RemoteWriteProtocol.o \
     $O/replication/ReplicaGroupManager.o \
-    $O/synchronization/BarkleySynch.o \
-    $O/synchronization/LamportClock.o \
+    $O/replication/DataItemsManager.o \
     $O/synchronization/LamportClockClient.o \
+    $O/synchronization/LamportClock.o \
+    $O/synchronization/BarkleySynch.o \
     $O/test/Txc.o \
-    $O/messages/CSynchMsg_m.o \
-    $O/messages/SystemMsg_m.o
+    $O/messages/SystemMsg_m.o \
+    $O/messages/CSynchMsg_m.o
 
 # Message files
 MSGFILES = \
-    messages/CSynchMsg.msg \
-    messages/SystemMsg.msg
+    messages/SystemMsg.msg \
+    messages/CSynchMsg.msg
 
 #------------------------------------------------------------------------------
 
@@ -114,11 +114,12 @@ endif
 
 # Main target
 all: $O/$(TARGET)
-	$(LN) $O/$(TARGET) .
+	$(Q)$(LN) $O/$(TARGET) .
 
 $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile
 	@$(MKPATH) $O
-	$(CXX) $(LDFLAGS) -o $O/$(TARGET)  $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS)
+	@echo Creating executable: $@
+	$(Q)$(CXX) $(LDFLAGS) -o $O/$(TARGET)  $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS)
 
 .PHONY: all clean cleanall depend msgheaders
 
@@ -126,35 +127,39 @@ $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile
 
 $O/%.o: %.cc $(COPTS_FILE)
 	@$(MKPATH) $(dir $@)
-	$(CXX) -c $(COPTS) -o $@ $<
+	$(qecho) "$<"
+	$(Q)$(CXX) -c $(COPTS) -o $@ $<
 
 %_m.cc %_m.h: %.msg
-	$(MSGC) -s _m.cc $(MSGCOPTS) $?
+	$(qecho) MSGC: $<
+	$(Q)$(MSGC) -s _m.cc $(MSGCOPTS) $?
 
 msgheaders: $(MSGFILES:.msg=_m.h)
 
 clean:
-	-rm -rf $O
-	-rm -f shareRDS shareRDS.exe libshareRDS.so libshareRDS.a libshareRDS.dll libshareRDS.dylib
-	-rm -f ./*_m.cc ./*_m.h
-	-rm -f application/*_m.cc application/*_m.h
-	-rm -f compmodules/*_m.cc compmodules/*_m.h
-	-rm -f concurrency/*_m.cc concurrency/*_m.h
-	-rm -f failure/*_m.cc failure/*_m.h
-	-rm -f invocation/*_m.cc invocation/*_m.h
-	-rm -f messages/*_m.cc messages/*_m.h
-	-rm -f multicast/*_m.cc multicast/*_m.h
-	-rm -f networks/*_m.cc networks/*_m.h
-	-rm -f recovery/*_m.cc recovery/*_m.h
-	-rm -f replication/*_m.cc replication/*_m.h
-	-rm -f synchronization/*_m.cc synchronization/*_m.h
-	-rm -f test/*_m.cc test/*_m.h
+	$(qecho) Cleaning...
+	$(Q)-rm -rf $O
+	$(Q)-rm -f shareRDS shareRDS.exe libshareRDS.so libshareRDS.a libshareRDS.dll libshareRDS.dylib
+	$(Q)-rm -f ./*_m.cc ./*_m.h
+	$(Q)-rm -f application/*_m.cc application/*_m.h
+	$(Q)-rm -f compmodules/*_m.cc compmodules/*_m.h
+	$(Q)-rm -f concurrency/*_m.cc concurrency/*_m.h
+	$(Q)-rm -f failure/*_m.cc failure/*_m.h
+	$(Q)-rm -f invocation/*_m.cc invocation/*_m.h
+	$(Q)-rm -f messages/*_m.cc messages/*_m.h
+	$(Q)-rm -f multicast/*_m.cc multicast/*_m.h
+	$(Q)-rm -f networks/*_m.cc networks/*_m.h
+	$(Q)-rm -f recovery/*_m.cc recovery/*_m.h
+	$(Q)-rm -f replication/*_m.cc replication/*_m.h
+	$(Q)-rm -f synchronization/*_m.cc synchronization/*_m.h
+	$(Q)-rm -f test/*_m.cc test/*_m.h
 
 cleanall: clean
-	-rm -rf $(PROJECT_OUTPUT_DIR)
+	$(Q)-rm -rf $(PROJECT_OUTPUT_DIR)
 
 depend:
-	$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
+	$(qecho) Creating dependencies...
+	$(Q)$(MAKEDEPEND) $(INCLUDE_PATH) -f Makefile -P\$$O/ -- $(MSG_CC_FILES)  ./*.cc application/*.cc compmodules/*.cc concurrency/*.cc failure/*.cc invocation/*.cc messages/*.cc multicast/*.cc networks/*.cc recovery/*.cc replication/*.cc synchronization/*.cc test/*.cc
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 $O/application/AppMsgGenerator.o: application/AppMsgGenerator.cc \

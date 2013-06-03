@@ -94,13 +94,13 @@ void ReplicaGroupManager::handleMessage(cMessage *msg)
             send(ReplicaGroupManager::generateReincarnationMessage(ReplicaIDs.at(reincCounter), clientID),"out",TO_NETWORK);// i send messages to all my connected replica.
             reincCounter++;
             SystemMsg* nextReincMSG = new SystemMsg();
-            scheduleAt(simTime()+0.1, nextReincMSG);
+            scheduleAt(simTime()+0.1, (cMessage *) nextReincMSG);
             //}
-            std::cout << "REPLICAGROUPMANAGER I'm alive "  <<std::endl;
+            std::cout << "REPLICAGROUPMANAGER "<< clientID << " I'm alive "  <<std::endl;
             dead = false;
         }
         else{
-            std::cout << "REPLICAGROUPMANAGER I'm dead "  <<std::endl;
+            std::cout << "REPLICAGROUPMANAGER "<< clientID << " I'm dead "  <<std::endl;
             dead = true;
         }
        //}

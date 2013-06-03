@@ -1,4 +1,2 @@
 # Partial Tkenv config file -- see $HOME/.tkenvrc as well
-inspector "Network1.client" "Client" "2" "1920x1060+0+0:iconic"
-inspector "Network1.client.clientReincarnation" "ClientReincarnation" "1" "869x424+794+0:normal"
 
